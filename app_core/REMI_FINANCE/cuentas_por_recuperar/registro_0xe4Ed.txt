@@ -1,0 +1,7 @@
+DIRECCIÓN: 0xe4EdB277e4122137966EFC68615b3C5890d2979E
+RED: Base Mainnet
+ESTADO: Fondos bloqueados (Falta llave privada)
+FECHA DE CREACIÓN: 2026 (según historial de BaseScan)
+NOTAS: Esta dirección recibió transferencias de la cuenta principal 0x96De...
+       No es un contrato notario funcional, es una EOA (billetera).
+   falta la llave 

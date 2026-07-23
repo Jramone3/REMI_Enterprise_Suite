@@ -1,0 +1,12 @@
+[Mon Jul 13 23:34:37 2026] 📥 INICIANDO PIPELINE DE DATOS - MODO MONGODB LOCAL
+[Mon Jul 13 23:34:37 2026] Extracción exitosa: 6147 elementos detectados en el JSON.
+[Mon Jul 13 23:34:37 2026] Limpieza completada: 2623 elementos únicos listos para almacenar.
+[Mon Jul 13 23:34:37 2026] ⚡ Insertando registros de forma masiva en MongoDB...
+[Mon Jul 13 23:34:37 2026] ✅ ÉXITO TOTAL: Se han inyectado 2623 registros en MongoDB local.
+[Mon Jul 13 23:34:37 2026] MISIÓN CUMPLIDA: El Búnker local está sincronizado y REMI ya tiene memoria interna.
+[Tue Jul 14 00:33:48 2026] 📥 INICIANDO PIPELINE DE DATOS - MODO MONGODB LOCAL
+[Tue Jul 14 00:33:48 2026] Extracción exitosa: 6147 elementos detectados en el JSON.
+[Tue Jul 14 00:33:48 2026] Limpieza completada: 2623 elementos únicos listos para almacenar.
+[Tue Jul 14 00:33:48 2026] ⚡ Insertando registros de forma masiva en MongoDB...
+[Tue Jul 14 00:33:48 2026] ✅ ÉXITO TOTAL: Se han inyectado 2623 registros en MongoDB local.
+[Tue Jul 14 00:33:48 2026] MISIÓN CUMPLIDA: El Búnker local está sincronizado y REMI ya tiene memoria interna.

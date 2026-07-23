@@ -1,0 +1,26 @@
+============================================================
+           REPORTE DE VULNERABILIDAD - REMI CORE
+============================================================
+
+TÍTULO: Critical Logic Error: Unprotected Administrative Function
+GRAVEDAD: [Critical / High]
+PROYECTO: [Nombre del Proyecto en Base]
+
+--- RESUMEN ---
+Se ha detectado una función administrativa accesible públicamente que permite la manipulación del estado del contrato o la extracción de fondos sin la debida autorización (Broken Access Control).
+
+--- DETALLES TÉCNICOS ---
+- Contrato Afectado: [Dirección detectada por el radar]
+- Selector de Función: [0x...]
+- Red: Base Mainnet
+
+--- PASOS PARA REPRODUCIR (PoC) ---
+1. Utilizando una dirección EOA externa (sin privilegios), se llama a la función detectada.
+2. La transacción se ejecuta con éxito (confirmado por simulación eth_call).
+3. Resultado: [Ej: El balance del contrato se puede retirar o la propiedad se puede cambiar].
+
+--- PRUEBA DE IDENTIDAD ---
+Este hallazgo ha sido sellado preventivamente en el contrato PatrimonioREMI de nuestro búnker local.
+
+BILLETERA DE COBRO: 0x96De980a766CCb10A19B6962587e2b61B650b372
+============================================================

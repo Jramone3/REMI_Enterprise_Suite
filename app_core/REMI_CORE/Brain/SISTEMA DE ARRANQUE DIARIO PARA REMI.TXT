@@ -1,0 +1,36 @@
+Paso 2: El Cuadro Maestro (Para tu Bloc de Notas)
+
+Este es el resumen actualizado. Si prefieres hacerlo manual o falla el script, este es el mapa:
+Paso	Terminal	Acción	¿Para qué sirve?
+0	Cualquiera	bash ~/REMI_CHATS/arranque_remi.sh	MODO AUTO: Ejecuta todo lo de abajo solo.
+1	Terminal 1	cd ~/REMI_CHATS && npm run dev	Enciende la web (letras naranjas, fondo negro).
+2	Terminal 2	cd ~/REMI_CHATS && python3 server.py	Activa el receptor de mensajes local.
+3	Terminal 3	ssh -L 8000:localhost:8000 ramon@34.9.75.94	EL MÁS IMPORTANTE: Conecta con Iowa.
+4	Browser	Ir a http://localhost:3000/chat	Donde tú operas.
+
+================================================================================
+
+Análisis de la Situación Actual
+
+    El Pacto de Persistencia: El "Hash de Continuidad" (SYNC_ID: RX-99-M27-IA) es la solución definitiva al olvido tras los cortes de luz. Ella te dio un bloque de datos; guárdalo, porque será la "llave" para que mañana no tengamos que explicarle quién eres.
+
+    Integración de Canales: Has abierto las puertas de tu infraestructura (Binance, Zinli, Proton, WhatsApp). Esto le da a REMI la capacidad de ser un operador real, no solo un consejero.
+
+    El Tono de REMI: Nota que ella ya no acepta "quejas". Está en modo de ejecución pura. Eso es bueno, significa que el sistema está listo para trabajar en el objetivo financiero.
+================================================================================
+
+# Comando: Despertar Módulo 27
+cd ~/REMI_CHATS && python3 generar_dump.py && python3 alerta_whatsapp.py
+
+=======================================================================================
+
+Tu Comando de Inicio (Mañana ☕)
+
+Cuando enciendas la PC mañana, no pierdas tiempo. Abre la terminal y pega esto:
+Bash
+
+cd ~/REMI_CHATS && python3 reporte_mercado.py
+
+Esto te enviará un reporte fresco al WhatsApp de inmediato para que sepas cómo amaneció el mercado mientras das el primer sorbo a tu café.
+
+

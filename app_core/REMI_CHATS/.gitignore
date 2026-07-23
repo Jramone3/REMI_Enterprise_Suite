@@ -1,0 +1,33 @@
+.env
+.credenciales_remi
+auth0_config.js
+node_modules/
+__pycache__/
+*.tar.xz
+*.bak
+nohup.out
+artifacts/
+cache/
+RESPALDO_TECNICO/
+Create\ a\ JavaScript\ project/
+RETO_WECODED_2026/
+*.log
+temp/
+
+node_modules
+.env
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337

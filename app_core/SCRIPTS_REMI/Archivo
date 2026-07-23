@@ -1,0 +1,11 @@
+# archivo_patrimonial.py
+# REMI – Módulo 7: Archivo Patrimonial
+# Autor, creativo y custodio patrimonial: jramonrivasg
+
+import logging
+
+def guardar_evento(evento: dict):
+    """Guarda un evento en la memoria patrimonial (ej. MongoDB/PostgreSQL)."""
+    logging.info(f"Módulo 7: Evento guardado -> {evento}")
+    # Aquí se integrará la base de datos real
+    return True

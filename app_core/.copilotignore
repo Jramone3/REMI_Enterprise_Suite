@@ -1,0 +1,33 @@
+# PROTOCOLO DE INVISIBILIDAD REMI SENSING ORO
+.env
+corpus_remi_master.json
+logs_remi.txt
+**/patrimonial/*
+**/config_financiera.json
+# Bloqueamos cualquier rastro de llaves API en el código
+**/*.key
+**/*.pem
+# --- PROTOCOLO DE PRIVACIDAD REMI SENSING ORO ---
+
+# Archivos de Claves y Credenciales
+.env
+USUSARIO Y CLAVE N8N txt
+**/*.ini
+**/*.xml
+
+# Bases de Datos e Inteligencia de REMI
+corpus_remi_master.json
+JSON_RESCATADOS/
+BACKUPS_BUNKER/
+DATOS_IMPORTANTES/
+
+# Registros y Binarios Pesados
+logs_remi.txt
+logs/
+MUESTRA_REMI.img
+demo_remi_final.mp4
+
+# Scripts de Sistema Sensibles
+remi_sync_auto.py
+remi_sync.py
+pipeline_remi.py

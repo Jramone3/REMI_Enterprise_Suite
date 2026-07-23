@@ -1,0 +1,10 @@
+# modulo9_sesiones.py
+# REMI – Módulo 9: Gestor de Sesiones
+# Autor, creativo y custodio patrimonial: jramonrivasg
+
+import logging
+
+def iniciar_sesion(usuario: str):
+    """Inicia una sesión patrimonial para un usuario."""
+    logging.info(f"Módulo 9: Sesión iniciada para {usuario}")
+    return {"usuario": usuario, "estado": "activo"}

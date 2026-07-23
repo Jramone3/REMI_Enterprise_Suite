@@ -1,0 +1,2 @@
+[2025-11-01 10:46:20] Exportación patrimonial y técnica completada por remi_exportacion_final.sh
+[2025-11-01 10:47:47] Exportación patrimonial y técnica completada por remi_exportacion_final.sh

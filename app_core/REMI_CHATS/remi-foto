@@ -1,0 +1,1 @@
+adb shell screencap -p /sdcard/vista_remi.png && adb pull /sdcard/vista_remi.png ./AUDITORIA/vista_remi.png && echo "¡Visión capturada!"

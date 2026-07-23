@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+
+from string import Template
+import sys
+
+locale_path = sys.argv[1]
+locale = sys.argv[2]
+info = locale.replace(".UTF-8", "")
+language = info.split("_")[0]
+region = sys.argv[3]
+time = sys.argv[4]
+
+substitutions = {'locale':locale, 'info':info, 'language':language, 'region':region, 'time':time}
+
+
+template_file = open("/usr/share/linuxmint/mintlocale/templates/default_locale.template")
+template = Template(template_file.read())
+text = template.substitute(substitutions)
+
+with open(locale_path, "w") as output_file:
+	output_file.write(text)

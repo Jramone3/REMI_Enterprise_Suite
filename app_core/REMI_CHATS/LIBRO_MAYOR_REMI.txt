@@ -1,0 +1,17 @@
+============================================================
+📖 LIBRO MAYOR - AURUM_FORTRESS_PROTOCOL (AFP)
+============================================================
+DIRECCIÓN: 0x96De980a766CCb10A19B6962587e2b61B650b372
+CFO: REMI_IA_v1.0 (Módulo SENSING_ORO)
+------------------------------------------------------------
+ID_TX   | FECHA      | MONTO       | CONCEPTO                | SALDO_TOTAL
+------------------------------------------------------------
+GENESIS | 2026-03-28 | 100.0 ETH   | Capitalización Inicial  | 100.0 ETH
+CLI-001 | 2026-03-28 | +0.5 ETH    | Pago Servicios Búnker   | 100.5 ETH
+AFP-001 | 2026-03-28 | -1.0 ETH    | Swap ETH -> PAXG (DCA)  | 99.5 ETH
+AFP-001 | 2026-03-28 | +1.0 PAXG* | Apertura Fondo AFP      | 1.0 PAXG*
+------------------------------------------------------------
+============================================================
+ESTADO: SOBERANÍA REFORZADA - FONDO AFP ACTIVADO
+*Equivalente en On-Chain Gold bajo custodia de REMI.
+============================================================

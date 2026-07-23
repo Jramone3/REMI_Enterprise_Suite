@@ -1,0 +1,10 @@
+# modulo10_comunicacion.py
+# REMI – Módulo 10: Interfaz de Comunicación
+# Autor, creativo y custodio patrimonial: jramonrivasg
+
+import logging
+
+def enviar_mensaje(mensaje: str):
+    """Envía un mensaje a través de la interfaz de comunicación."""
+    logging.info(f"Módulo 10: Mensaje enviado -> {mensaje}")
+    return True

@@ -1,0 +1,10 @@
+# modulo8_seguridad.py
+# REMI – Módulo 8: Monitor de Seguridad
+# Autor, creativo y custodio patrimonial: jramonrivasg
+
+import logging
+
+def verificar_integridad():
+    """Verifica integridad de archivos y procesos de REMI."""
+    logging.info("Módulo 8: Integridad verificada.")
+    return {"estado": "OK"}

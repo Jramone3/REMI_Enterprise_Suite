@@ -1,0 +1,7 @@
+Nombre del módulo: remi_consulta_legal.sh
+Propósito: Activar consulta legal automatizada desde Linux Mint XFCE hacia LEXIUS Venezuela
+Custodio: jramonrivasg
+Fecha de activación: 22/10/2025
+Supervisión: REMI, agente patrimonial autónomo
+Firma digital: MintBridge.html.sig
+Verificación: sha256sum -c MintBridgeXFCE_v1.0.sha256

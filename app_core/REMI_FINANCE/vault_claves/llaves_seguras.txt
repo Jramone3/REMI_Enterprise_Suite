@@ -1,0 +1,163 @@
+¡
+    
+---------------------------------------------------------------------
+
+    mi walet 
+  ===========
+
+0x96De980a766CCb10A19B6962587e2b61B650b372
+
+    private_key = "9bb4285c9609feee26c70d2045fe8d72cd121ef985045fd8d9cfa807c7779de2"
+
+Transactions
+Internal Transactions
+Token Transfers (ERC-20)
+Other Transactions
+Analytics
+Assets
+Cards
+New
+Multichain Portfolio
+Tokens
+NFTs
+0x96De980a766CCb10A19B6962587e2b61B650b372
+Net Worth in USD
+$1.07
+Net Worth in ETH
+0.00051
+ETH
+99.89%
+POL
+0.11%
+Multichain Portfolio | 33 Chains
+Display all chains
+•
+Last updated: less than 1 sec ago
+Base
+Base (1)
+$1 (100%)
+ Show 32 more chains
+Showing 2 tokens with a value of $1
+Search
+Chain	Token	Portfolio %	Price	Amount	Value
+BASE	
+
+Ether (ETH)
+99.89%	$2,100.89	0.00050984	$1.07
+POL	
+
+Polygon (POL)
+0.11%	$0.0904	0.013	$0.001179
+
+--------------------------------------------------------------------
+key 4 0x04DBc19CB0e8E12bbDD7f43062B6B233c4332bDA        OK CHEQUEADA 
+
+este contrato tiene un saldo :
+
+  0x04DBc19CB0e8E12bbDD7f43062B6B233c4332bDA "4ba76f707dbf0af5ceaae9aefc3656916ec8da1b5c864209b84c2bd16141d329",-
+
+Transactions
+Token Transfers (ERC-20)
+Other Transactions
+Analytics
+Assets
+Cards
+New
+Multichain Portfolio
+Tokens
+NFTs
+0x79D79B1cE83e32f35798ad1A3C8DBB101B6F3291
+Net Worth in USD
+$14.29
+Net Worth in ETH
+0.006809
+USDC
+99.98%
+POL
+0.02%
+Multichain Portfolio | 33 Chains
+Display all chains
+•
+Last updated: less than 1 sec ago
+Polygon
+Polygon (2)
+$14 (100%)
+ Show 32 more chains
+Showing 2 tokens with a value of $14
+Search
+Chain	Token	Portfolio %	Price	Amount	Value
+POL	
+
+USD Coin (USDC)
+99.98%	$0.99983	14.2876	$14.29
+POL	
+
+Polygon (POL)
+0.02%	$0.090502	0.0352	$0.003184
+
+--------------------------------------------------------------------
+
+otra con saldo key 3                          OK CHEQUEADA 
+
+  0x79D79B1cE83e32f35798ad1A3C8DBB101B6F3291 "f0d4f993d117ee86b9a6c8d0e5232d795a08db1bc4c14044ed54feba94ab2485",
+
+
+Transactions
+Token Transfers (ERC-20)
+Other Transactions
+Analytics
+Assets
+Cards
+New
+Multichain Portfolio
+Tokens
+NFTs
+0x79D79B1cE83e32f35798ad1A3C8DBB101B6F3291
+Net Worth in USD
+$14.29
+Net Worth in ETH
+0.006818
+USDC
+99.98%
+POL
+0.02%
+Multichain Portfolio | 33 Chains
+Display all chains
+•
+Last updated: less than 1 sec ago
+Polygon
+Polygon (2)
+$14 (100%)
+ Show 32 more chains
+Showing 2 tokens with a value of $14
+Search
+Chain	Token	Portfolio %	Price	Amount	Value
+POL	
+
+USD Coin (USDC)
+99.98%	$0.999791	14.2876	$14.28
+POL	
+
+Polygon (POL)
+0.02%	$0.090186	0.0352	$0.003173
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+otras para usar 
+
+   0x42D1006311d390c3905E2B19e0884349bc31aDE6 0x28c6c1a33a6eafbd55e70d565f6f2599432ce6419265ffeb106f6e3fe7807172 
+
+
+   0x04DBc19CB0e8E12bbDD7f43062B6B233c4332bDA "4ba76f707dbf0af5ceaae9aefc3656916ec8da1b5c864209b84c2bd16141d329",
+
+
+   0xe9aD8ea6f2b07272e66C9Ab16CF3c44A60d4C519 "d753e1b8de69ec9e240327cd5289c9ca6d9e521e5bd4fdee2ac5b4e85303cba2",
+
+
+   0xDF74D3993A03605d26F7c60f02D9b4DaA3911b74 "66871d66be19ad2c34c927d6b14cd8eb6fc3181965b6e517cb361f7316009cfb",
+
+
+   0x8FB4312668FFD00541180d6e5A0ED0e06B806B3a "d6833748595f9f6b12ab9dcd165886f8f7a9970e3a6e49a6face8196a83ab288",
+
+
+   0xB6424D50Bd8B8C3Cd745DD893F74CaeEfb9425Ed "c83dc511057bfebcfe4120d2199dfe47c83c633e4a7123e6b0d7b24b1a44db96"
+

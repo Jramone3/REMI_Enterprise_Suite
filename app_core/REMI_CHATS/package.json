@@ -1,0 +1,38 @@
+{
+  "name": "chat_remi_interactivo",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interfaz patrimonial de conversación con REMI.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build",
+    "start": "next start",
+    "clean": "rm -rf .next"
+  },
+  "keywords": [
+    "REMI",
+    "patrimonial",
+    "Next.js"
+  ],
+  "author": "jramonrivasg",
+  "license": "ISC",
+  "dependencies": {
+    "@next/swc-linux-x64-gnu": "^16.0.5",
+    "cors": "^2.8.6",
+    "crypto-js": "^4.2.0",
+    "mongodb": "^7.0.0",
+    "next": "^16.0.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "styled-jsx": "^5.1.7"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.2",
+    "@nomicfoundation/hardhat-ethers": "^4.0.6",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.4",
+    "hardhat": "^3.4.3",
+    "ts-node": "^10.9.2"
+  }
+}

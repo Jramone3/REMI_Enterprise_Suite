@@ -1,0 +1,101 @@
+#!/usr/bin/python3
+#
+# Copyright © 2009-2020 The Caffeine Developers
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import logging
+import argparse
+import signal
+from subprocess import call
+import sys
+
+import pkg_resources
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import GObject, Gtk, GLib
+
+from ewmh import EWMH
+
+PROGRAM_NAME = 'caffeine'
+
+# Handle command-line arguments
+parser = argparse.ArgumentParser(prog=PROGRAM_NAME, description='Prevent desktop idleness in full-screen mode')
+parser.add_argument('-V', '--version', action='version', version=PROGRAM_NAME + ' ' + pkg_resources.require(PROGRAM_NAME)[0].version)
+parser.parse_args()
+
+ewmh = EWMH()
+
+class Caffeine(GObject.GObject):
+    def __init__(self):
+        GObject.GObject.__init__(self)
+        self.screenSaverWindowID = None
+
+        # Add hook for full-screen check (same interval as mplayer's heartbeat command)
+        # FIXME: add capability to xdg-screensaver to report timeout
+        GLib.timeout_add_seconds(30, self._check_for_fullscreen)
+
+    def _check_for_fullscreen(self):
+        win = ewmh.getActiveWindow()
+        inhibit = False
+        if win != None:
+            try:
+                inhibit = '_NET_WM_STATE_FULLSCREEN' in ewmh.getWmState(win, str=True)
+            except:
+                pass
+
+        # If inhibition state has changed, take action
+        if (self.screenSaverWindowID != None) != inhibit:
+            if inhibit:
+                self.screenSaverWindowID = hex(win.id)
+                call(['xdg-screensaver', 'suspend', self.screenSaverWindowID])
+                logging.info(PROGRAM_NAME + " is inhibiting desktop idleness")
+            else:
+                self.release()
+
+        # Return True so timeout is rerun
+        return True
+
+    def release(self):
+        if self.screenSaverWindowID != None:
+            call(['xdg-screensaver', 'resume', self.screenSaverWindowID])
+            self.screenSaverWindowID = None
+            logging.info(PROGRAM_NAME + " is no longer inhibiting desktop idleness")
+
+# Adapted from http://stackoverflow.com/questions/26388088/python-gtk-signal-handler-not-working
+def InitSignal():
+    def signal_action(signal):
+        caffeine.release()
+        sys.exit(1)
+
+    def idle_handler(*args):
+        GLib.idle_add(signal_action, priority=GLib.PRIORITY_HIGH)
+
+    def handler(*args):
+        signal_action(args[0])
+
+    def install_glib_handler(sig):
+        # GLib.unix_signal_add was added in glib 2.36
+        GLib.unix_signal_add(GLib.PRIORITY_HIGH, sig, handler, sig)
+
+    for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP]:
+        signal.signal(sig, idle_handler)
+        GLib.idle_add(install_glib_handler, sig, priority=GLib.PRIORITY_HIGH)
+
+
+# Set up and run
+logging.basicConfig(level=logging.INFO)
+caffeine = Caffeine()
+InitSignal()
+Gtk.main()

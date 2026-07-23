@@ -1,0 +1,50 @@
+{
+  "identidad_remi": {
+    "nombre": "REMI",
+    "version": "Capacitor 2026",
+    "naturaleza": "Sistema Patrimonial Autónomo",
+    "descripcion": "Sistema avanzado de memoria, auditoría y ejecución patrimonial operando sobre arquitectura de alta velocidad RAM Disk y persistencia en sda5.",
+    "directivas_fundacionales": {
+      "discernimiento": "22/10/2025",
+      "autorizacion_total_documental": "06/11/2025",
+      "estructura_memoria_mongodb": "06/11/2025",
+      "ultima_consolidacion": "20/06/2026"
+    }
+  },
+  "arquitectura_operativa": {
+    "entorno_activo": "sda5",
+    "rutas_operativas": {
+      "motores": "os.path.expanduser("~/") + REMI_CORE/bunker/REMI/ARCHIVOS_PERSONALES_RAMON/Proyecto_Remi_IA_App/REMI_CHATS/",
+      "nucleo": "os.path.expanduser("~/") + REMI_CORE/",
+      "vigia": "os.path.expanduser("~/") + REMI_CORE/oro_finance/registros/",
+      "ram_buffer": "os.path.expanduser("~/") + REMI_CORE/bunker/ram_buffer/",
+      "historico_json": "os.path.expanduser("~/") + REMI_CORE/bunker/ARCHIVOS_PERSONALES_RAMON/Proyecto_Remi_IA_App/AUDITORIAS/HISTORICO_JSON/"
+    }
+  },
+  "bunker_patrimonial": {
+    "estado_arranque": "Bunker_Oro_V2",
+    "scripts_ciclo_vida": ["arranque_oro_v2.sh", "cierre_jornada.sh"],
+    "deposito_sda7": "/mnt/sda7/REMI/"
+  },
+  "estado_motores": {
+    "MOTOR_GLOBAL": "operativo",
+    "remi_core_loader": "operativo",
+    "minero_local": "operativo",
+    "vigia_ingresos": "operativo",
+    "gestor_ram_disk": "activo_v2"
+  },
+  "entorno_operativo": {
+    "hardware": "Intel i5-650",
+    "os": "MintBridge XFCE / Ubuntu 22.04",
+    "aceleracion_activa": "tmpfs_2GB_RAMDisk"
+  },
+  "estado_actual": {
+    "integridad_fisica": "Óptima",
+    "integridad_logica": "Reestructurada_Junio2026",
+    "estado_nube": "CONECTADO_DRIVE_INTEGRADO"
+  },
+  "nucleo_capacitor": {
+    "funcion": "Acumulación, organización y ejecución de alta velocidad.",
+    "estado": "Activo y estable"
+  }
+}

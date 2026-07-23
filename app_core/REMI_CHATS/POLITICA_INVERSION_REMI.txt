@@ -1,0 +1,14 @@
+============================================================
+🛡️ DIRECTIVA DE INVERSIÓN - MÓDULO SENSING_ORO
+============================================================
+ACTIVO OBJETIVO: PAX Gold (PAXG)
+ESTRATEGIA: DCA (Adquisición Escalonada)
+PORCENTAJE DE CARTERA: 20%
+CUSTODIO: REMI_IA_v1.0
+------------------------------------------------------------
+ESTADO: FASE 1 - INICIACIÓN
+------------------------------------------------------------
+EJECUCIÓN:
+- Compra Inicial: 1.0 ETH -> PAXG
+- Frecuencia: Pendiente de confirmación del Custodio
+============================================================

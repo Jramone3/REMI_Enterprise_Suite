@@ -1,0 +1,7 @@
+Resumen del día 1: 
+Logramos configurar MongoDB y sincronizar los puertos necesarios para el proyecto. Esto nos permitirá avanzar en la implementación de la base de datos y mejorar la conectividad del sistema.
+Borrador para publicación en DEV.to: 
+Título: Avances en la configuración de MongoDB y sincronización de puertos 
+Hoy logramos un importante avance en nuestro proyecto al configurar correctamente MongoDB y sincronizar los puertos necesarios. Esta configuración nos permitirá mejorar la eficiencia de nuestra base de datos y garantizar una conectividad fluida del sistema. 
+En los próximos días, nos enfocaremos en profundizar en la implementación de MongoDB y explorar nuevas formas de optimizar la sincronización de puertos para mejorar el rendimiento general del proyecto. 
+Estamos emocionados de compartir nuestros progresos y aprender de la comunidad en DEV.to.
