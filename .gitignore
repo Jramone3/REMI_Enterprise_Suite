@@ -1,9 +1,1 @@
-*.env
-*.pem
-*.key
-*.db
-*.bin
-*.txt
-*.log
-__pycache__/
-.DS_Store
+requirements.txt
