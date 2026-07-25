@@ -2,5 +2,6 @@ streamlit
 fastapi
 uvicorn
 requests
-python-dotenv\pymongo
+python-dotenv
+pymongo
 web3
