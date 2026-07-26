@@ -26,3 +26,4 @@ if st.button("Enviar a REMI"):
 
 st.markdown("---")
 st.markdown("*REMI Enterprise Suite © 2026 - Desarrollado por jramonrivasg*")
+
