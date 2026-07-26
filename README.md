@@ -11,3 +11,4 @@ pinned: false
 
 # REMI Enterprise Suite - Interactive Demo
 Framework multi-agente y núcleo de inteligencia artificial.
+# Force deployment sync
