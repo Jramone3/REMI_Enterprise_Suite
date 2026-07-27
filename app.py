@@ -14,18 +14,31 @@ st.title("REMI Enterprise Suite")
 st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
 st.markdown("---")
 
-st.info("Bienvenido a la vitrina de demostración interactiva. Esta versión muestra las capacidades lógicas del núcleo de REMI.")
+st.info("Bienvenido a la vitrina de demostración interactiva. Escribe una consulta para interactuar con el núcleo.")
 
-# Campo de interacción de ejemplo para la demo
-user_input = st.text_input("Escribe una consulta o instrucción para REMI:")
+# Inicializar historial de chat en la sesión de Streamlit
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if st.button("Enviar a REMI"):
-    if user_input:
-        # Respuesta simulada o conexión al motor de agentes del app_core
-        st.success(f"**REMI (Núcleo Activo):** Procesando solicitud comercial para: *'{user_input}'*")
-        st.write("Para acceder a la versión completa, pasarelas de despliegue en servidor propio y módulos avanzados, adquiere tu licencia Enterprise.")
-    else:
-        st.warning("Por favor, ingresa una consulta.")
+# Mostrar mensajes anteriores del chat
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Entrada de chat interactiva en la parte inferior
+if prompt := st.chat_input("Escribe una consulta o instrucción para REMI:"):
+    # Agregar mensaje del usuario al historial
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Generar respuesta simulada o lógica del núcleo
+    response = f"**REMI (Núcleo Activo):** Procesando solicitud para: *'{prompt}'*. Diagnóstico de nodos estables y clúster multi-agente sincronizado correctamente."
+    
+    # Agregar respuesta del asistente al historial
+    st.session_state.messages.append({"role": "assistant", "content": response})
+    with st.chat_message("assistant"):
+        st.markdown(response)
 
 st.markdown("---")
 st.markdown("*REMI Enterprise Suite © 2026 - Desarrollado por jramonrivasg*")
