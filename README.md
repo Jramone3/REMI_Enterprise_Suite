@@ -1,4 +1,11 @@
 ---
+license: mit
+tags:
+  - ai-agents
+  - enterprise-suite
+  - security
+  - auditing
+  - multi-agent
 title: REMI Enterprise Suite Demo
 emoji: 🤖
 colorFrom: blue
@@ -11,4 +18,3 @@ pinned: false
 
 # REMI Enterprise Suite - Interactive Demo
 Framework multi-agente y núcleo de inteligencia artificial.
-# Force deployment sync
