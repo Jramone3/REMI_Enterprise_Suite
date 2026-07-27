@@ -7,12 +7,9 @@ st.set_page_config(
     layout="centered"
 )
 
-# Encabezado con imagen personalizada de Remi y título alineados
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("assets/remi_logo.png", width=80)
-with col2:
-    st.title("REMI Enterprise Suite")
+# Imagen oficial de REMI y título principal
+st.image("assets/remi_imagen_oficial.jpeg", width=200)
+st.title("REMI Enterprise Suite")
 
 st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
 st.markdown("---")
