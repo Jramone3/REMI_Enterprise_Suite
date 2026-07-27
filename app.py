@@ -3,11 +3,17 @@ import os
 
 st.set_page_config(
     page_title="REMI Enterprise Suite - Demo",
-    page_icon="🤖",
+    page_icon="assets/remi_logo.png",
     layout="centered"
 )
 
-st.title("🤖 REMI Enterprise Suite")
+# Encabezado con imagen personalizada de Remi y título alineados
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image("assets/remi_logo.png", width=80)
+with col2:
+    st.title("REMI Enterprise Suite")
+
 st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
 st.markdown("---")
 
@@ -26,4 +32,3 @@ if st.button("Enviar a REMI"):
 
 st.markdown("---")
 st.markdown("*REMI Enterprise Suite © 2026 - Desarrollado por jramonrivasg*")
-
