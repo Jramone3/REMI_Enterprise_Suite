@@ -21,7 +21,7 @@ st.markdown("---")
 # BARRA LATERAL: PASARELA Y LICENCIAMIENTO
 # ==========================================
 with st.sidebar:
-    st.image("assets/remi_logo.png", width=100)
+    st.image("assets/remi_imagen_oficial.jpeg", width=100)
     st.subheader("Portal Enterprise")
     st.caption("Infraestructura respaldada por Standard EOA-Contract via Base Network / Búnker Local.")
     
