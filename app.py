@@ -1,126 +1,156 @@
-import streamlit as st
+#!/usr/bin/env python3
+"""
+REMI Enterprise Suite - Streamlit Interactive Demo (standardized English)
+This demo showcases:
+- Enterprise license issuance (demo-only; replace with secure backend in production)
+- License verification and update synchronization checks
+- Local multi-agent core chat client (connect to a local LLM REST endpoint)
+
+Notes for production:
+- Do not rely on client-side license generation. Use a secure signing server/HSM.
+- Validate on-chain transfers through a back-end provider and keep an auditable record.
+"""
+
 import os
-import requests
 import hashlib
 from datetime import datetime, timedelta
 
+import requests
+import streamlit as st
+
+# Page configuration
 st.set_page_config(
-    page_title="REMI Enterprise Suite - Demo & Licenciamiento",
+    page_title="REMI Enterprise Suite — Demo & Licensing",
     page_icon="assets/remi_logo.png",
-    layout="centered"
+    layout="centered",
 )
 
-# Imagen oficial de REMI y título principal
+# Header
 st.image("assets/remi_imagen_oficial.jpeg", width=200)
 st.title("REMI Enterprise Suite")
-
-st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
+st.markdown("### Enterprise Multi-Agent Framework and AI Core")
 st.markdown("---")
 
-# ==========================================
-# BARRA LATERAL: PASARELA Y LICENCIAMIENTO
-# ==========================================
+# Sidebar: Licensing and Administration
 with st.sidebar:
     st.image("assets/remi_imagen_oficial.jpeg", width=100)
-    st.subheader("Portal Enterprise")
-    st.caption("Infraestructura respaldada por Standard EOA-Contract via Base Network / Búnker Local.")
-    
+    st.subheader("Enterprise Portal")
+    st.caption("Infrastructure backed by a standard EOA contract (Base Network) or local secure enclave.")
     st.markdown("---")
-    st.markdown("### 💎 Adquirir Licencia Anual")
-    st.markdown("**Costo:** $499 USD / Año")
-    st.markdown("Incluye soporte técnico, actualizaciones directas del clúster multi-agente y módulos avanzados de auditoría.")
-    
-    if st.button("Generar Datos de Pago"):
-        st.session_state.mostrar_pago = True
 
-    if st.session_state.get("mostrar_pago", False):
+    st.markdown("### 💎 Annual Enterprise License")
+    st.markdown("**Price:** $499 USD / year")
+    st.markdown(
+        "Includes technical support, direct multi-agent cluster updates, and advanced auditing modules."
+    )
+
+    # Payment data toggle
+    if st.button("Generate Payment Data"):
+        st.session_state.show_payment = True
+
+    if st.session_state.get("show_payment", False):
         st.info(
-            "**Instrucciones de Pago Directo:**\n\n"
-            "1. Envía **499 USDT (ERC-20 / Base)** o equivalente en ETH/BNB a:\n"
+            "**Direct Payment Instructions:**\n\n"
+            "1. Send **499 USDT (ERC-20 / Base)** or equivalent in ETH/BNB to:\n"
             "`0x96De980a766CCb10A19B6962587e2b61B650b372`\n\n"
-            "2. Registra tus datos y el **TxID** de la transferencia para emitir tu llave anual."
+            "2. Register your purchaser email and provide the transaction hash (TxHash) to receive your annual license key."
         )
-        
-        # Formulario de registro y validación del cliente
-        cliente_email = st.text_input("Correo electrónico de registro:")
-        tx_input = st.text_input("Hash de la Transacción (TxID):")
-        
-        if st.button("Verificar y Activar Licencia Anual"):
-            if cliente_email and tx_input:
-                # Generar clave de licencia única cifrada basada en el correo y el timestamp actual
-                fecha_expiracion = datetime.now() + timedelta(days=365)
-                raw_key = f"{cliente_email}-{tx_input}-REMI-2026"
-                hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
-                licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
-                
-                st.success("¡Pago procesado por el nodo! Licencia Enterprise emitida exitosamente.")
-                st.markdown(f"**Cliente Registrado:** {cliente_email}")
-                st.markdown(f"**Válida hasta:** {fecha_expiracion.strftime('%Y-%m-%d')}")
-                st.code(licencia_final, language="text")
-                st.caption("Guarda esta llave en tu servidor local para recibir actualizaciones directas del sistema.")
+
+        # Registration form for license activation (demo)
+        purchaser_email = st.text_input("Registration email:")
+        tx_hash = st.text_input("Transaction hash (TxHash):")
+
+        if st.button("Verify and Activate Annual License"):
+            if purchaser_email and tx_hash:
+                # Demo license generation logic:
+                # In production, perform on-chain verification and sign license server-side
+                expiration_date = datetime.utcnow() + timedelta(days=365)
+                raw_key_material = f"{purchaser_email}-{tx_hash}-REMI-2026"
+                derived = hashlib.sha256(raw_key_material.encode("utf-8")).hexdigest()[:24].upper()
+                license_key = f"REMI-ENT-ANNUAL-{derived}"
+
+                st.success("Payment noted by node. Enterprise license issued successfully (demo).")
+                st.markdown(f"**Registered purchaser:** {purchaser_email}")
+                st.markdown(f"**Valid until:** {expiration_date.strftime('%Y-%m-%d')}")
+                st.code(license_key, language="text")
+                st.caption("Store this license key on your local server to receive direct system updates.")
             else:
-                st.warning("Por favor ingresa tu correo y un TxID válido.")
+                st.warning("Please provide a valid registration email and transaction hash (TxHash).")
 
     st.markdown("---")
-    st.markdown("### 🔄 Verificación de Actualizaciones")
-    email_check = st.text_input("Correo registrado:")
-    key_check = st.text_input("Clave de Licencia:")
-    if st.button("Comprobar Actualizaciones"):
-        if email_check and key_check:
-            st.success("Licencia activa. Clúster sincronizado con el último parche de seguridad del repositorio.")
+    st.markdown("### 🔄 Update Verification")
+    check_email = st.text_input("Registered email for verification:", key="check_email")
+    check_license = st.text_input("License key:", key="check_license")
+    if st.button("Check for Updates"):
+        if check_email and check_license:
+            # Demo verification response: in production, query license database and update server
+            st.success(
+                "License active. Cluster synchronized to the latest security patch available for this release."
+            )
         else:
-            st.warning("Introduce tus credenciales registradas.")
+            st.warning("Please enter your registered credentials (email and license key).")
 
-# ==========================================
-# INTERFAZ PRINCIPAL DE CHAT (NÚCLEO LOCAL)
-# ==========================================
-st.info("Bienvenido a la vitrina interactiva de REMI. Escribe una consulta para interactuar en tiempo real con el núcleo local.")
+# Main interface: Local multi-agent core chat
+st.info("Welcome to the REMI interactive showcase. Enter a query to interact with the local AI core.")
 
-# Inicializar historial de chat
+# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mostrar historial en pantalla
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Display chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# Entrada de chat interactiva
-if prompt := st.chat_input("Escribe una consulta o instrucción para REMI:"):
+# Chat input (user)
+if prompt := st.chat_input("Type a query or instruction for REMI:"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generar respuesta mediante el núcleo local (Ollama / Llama 3)
-    with st.chat_message("assistant"):
-        with st.spinner("REMI procesando a través del núcleo multi-agente local..."):
-            try:
-                system_prompt = (
-                    "Eres REMI, el núcleo de inteligencia artificial de REMI Enterprise Suite, "
-                    "un framework multi-agente avanzado desarrollado por jramonrivasg. "
-                    "Responde con un tono técnico, profesional, analítico y ejecutivo."
-                )
+    # Build system prompt for the local model
+    system_prompt = (
+        "You are REMI, the AI core of REMI Enterprise Suite — an enterprise multi-agent framework. "
+        "Respond in a technical, professional, analytical, and executive tone. Provide clear, actionable guidance "
+        "and cite any assumptions when appropriate."
+    )
 
-                url = "http://localhost:11434/api/chat"
+    # Call local LLM-compatible REST API (demo)
+    with st.chat_message("assistant"):
+        with st.spinner("REMI processing through the local multi-agent core..."):
+            try:
+                api_url = os.environ.get("REMI_LOCAL_CORE_URL", "http://localhost:11434/api/chat")
                 payload = {
                     "model": "llama3",
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
-                    "stream": False
+                    "stream": False,
                 }
-                
-                response = requests.post(url, json=payload)
-                if response.status_code == 200:
-                    respuesta_ia = response.json()["message"]["content"]
-                else:
-                    respuesta_ia = f"**REMI (Núcleo Activo):** Error al conectar con el servidor local de IA (Código {response.status_code})."
-            except Exception as e:
-                respuesta_ia = f"**REMI (Núcleo Activo):** No se pudo establecer comunicación con el clúster local. Asegúrate de que el servicio esté activo."
 
-            st.markdown(respuesta_ia)
-            st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
+                response = requests.post(api_url, json=payload, timeout=20)
+                if response.status_code == 200:
+                    # Expected shape: { "message": { "content": "..." } }
+                    data = response.json()
+                    assistant_text = data.get("message", {}).get("content", "").strip()
+                    if not assistant_text:
+                        assistant_text = "REMI: The model responded with an empty message."
+                else:
+                    assistant_text = (
+                        f"REMI (Core): Failed to connect to the local AI core (status {response.status_code}). "
+                        "Ensure the local model service is running and reachable."
+                    )
+            except requests.exceptions.RequestException:
+                assistant_text = (
+                    "REMI (Core): Unable to establish communication with the local cluster. "
+                    "Verify the AI core service is running and accessible from this host."
+                )
+            except Exception:
+                assistant_text = "REMI (Core): An unexpected error occurred while contacting the local AI core."
+
+            st.markdown(assistant_text)
+            st.session_state.messages.append({"role": "assistant", "content": assistant_text})
 
 st.markdown("---")
-st.markdown("*REMI Enterprise Suite © 2026 - Desarrollado por jramonrivasg*")
+st.markdown("REMI Enterprise Suite © 2026 — Developed by jramonrivasg")
