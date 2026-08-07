@@ -1,3 +1,18 @@
+<<<<<<< HEAD
 requirements.txt
 assets/
 assets/
+=======
+app_core/REMI_CHATS/
+app_core/CODIGOS_RECUPERADOS/
+app_core/REMI_FINANCE/
+*.tar
+*.zip
+*.gpg
+*.asc
+*.key
+*.env
+venv/
+__pycache__/
+app_core/browser_profile/
+>>>>>>> 09b9668 (chore: limpieza de archivos de búnker y ajuste de dependencias v1.0.0)
