@@ -1,15 +1,9 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "streamlit_app.py",
-      "use": "@vercel/python"
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
-      "destination": "streamlit_app.py"
+      "destination": "https://remienterprisesuite-3exqr8tuezumc9omtprvwn.streamlit.app/$1"
     }
   ]
 }
