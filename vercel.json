@@ -1,9 +1,3 @@
 {
-  "framework": null,
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "https://remienterprisesuite-3exqr8tuezumc9omtprvwn.streamlit.app/$1"
-    }
-  ]
+  "cleanUrls": true
 }
