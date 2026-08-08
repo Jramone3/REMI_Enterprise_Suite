@@ -40,7 +40,7 @@ LANDING_PAGE_HTML = """
         </h1>
         
         <p class="text-lg md:text-xl text-gray-400 max-w-2xl mb-10 font-light">
-            Despliega agentes autónomos y herramientas de auditoría en tu propia infraestructura (Windows, macOS y Linux) sin pagar tarifas por token ni arriesgar la confidencialidad de tus datos.
+            Despliega agentes autónomos y herramientas de auditoría en tu propia infraestructura sin pagar tarifas por token ni arriesgar la confidencialidad de tus datos.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 mb-16">
@@ -54,7 +54,7 @@ LANDING_PAGE_HTML = """
 
         <div class="w-full max-w-4xl bg-gray-900/80 border border-neon rounded-2xl p-8 mb-16 text-left relative overflow-hidden">
             <div class="absolute top-0 right-0 bg-cyan-500/10 text-cyan-400 text-xs font-mono px-4 py-1.5 rounded-bl-xl border-l border-b border-cyan-800/50">
-                NODO OPERATIVO · PUERTO 8000
+                NODO OPERATIVO · VERCEL CLOUD
             </div>
             <div class="flex flex-col md:flex-row items-center gap-6">
                 <div class="w-24 h-24 rounded-full bg-cyan-950 border-2 border-cyan-400/80 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
@@ -63,39 +63,19 @@ LANDING_PAGE_HTML = """
                 <div>
                     <h3 class="text-xl font-bold text-cyan-400 mb-2">Núcleo Interactivo de Remi</h3>
                     <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                        "Saludos. Soy Remi, el núcleo de agentes autónomos de REMI Enterprise Suite. Operando de forma 100% local bajo FastAPI y Uvicorn en el puerto 8000. Cero fugas de datos, cifrado SQLite/JSON y cero tarifas por token."
+                        "Saludos. Soy Remi, el núcleo de agentes autónomos de REMI Enterprise Suite. Operando de forma soberana. Cero fugas de datos y cero tarifas por token."
                     </p>
                     <div class="flex flex-wrap gap-2 text-xs font-mono text-cyan-300">
                         <span class="bg-black/40 px-2.5 py-1 rounded border border-cyan-900">GET /api/v1/health</span>
                         <span class="bg-black/40 px-2.5 py-1 rounded border border-cyan-900">POST /api/v1/agent/run</span>
-                        <span class="bg-black/40 px-2.5 py-1 rounded border border-cyan-900">POST /api/v1/license/verify</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="pilares" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mb-16">
-            <div class="bg-gray-900/50 border border-gray-800 p-6 rounded-xl text-left">
-                <h3 class="text-cyan-400 font-bold mb-2">⚖️ Bufetes Legales</h3>
-                <p class="text-sm text-gray-400">Confidencialidad absoluta y cumplimiento estricto del secreto profesional mediante procesamiento estrictamente on-premise.</p>
-            </div>
-            <div class="bg-gray-900/50 border border-gray-800 p-6 rounded-xl text-left">
-                <h3 class="text-cyan-400 font-bold mb-2">📈 Consultoras Financieras</h3>
-                <p class="text-sm text-gray-400">Soberanía de datos y reducción de hasta un 70% en costos operativos al eliminar las tarifas por token en la nube.</p>
-            </div>
-            <div class="bg-gray-900/50 border border-gray-800 p-6 rounded-xl text-left">
-                <h3 class="text-cyan-400 font-bold mb-2">⚙️ PYMES de Ingeniería</h3>
-                <p class="text-sm text-gray-400">Autonomía operativa 24/7 sin dependencia de internet constante ni caídas imprevistas de servidores externos.</p>
-            </div>
-            <div class="bg-gray-900/50 border border-gray-800 p-6 rounded-xl text-left">
-                <h3 class="text-cyan-400 font-bold mb-2">🏫 Comercios y Academias</h3>
-                <p class="text-sm text-gray-400">Herramientas internas de auditoría avanzada, control transaccional seguro y enseñanza técnica en ciberseguridad.</p>
-            </div>
-        </div>
-
         <div id="licenciamiento" class="w-full max-w-4xl bg-gradient-to-b from-gray-900 to-black border border-cyan-900/50 rounded-2xl p-8 text-center">
             <h2 class="text-2xl font-bold mb-3 text-cyan-300">Pasarela Enterprise & Licenciamiento ($499 USD / Año)</h2>
-            <p class="text-gray-400 text-sm mb-6">Modelo de negocio anual corporativo con pagos descentralizados vía Red Base (EOA Contract).</p>
+            <p class="text-gray-400 text-sm mb-6">Modelo de negocio anual corporativo con pagos descentralizados vía Red Base.</p>
             <div class="max-w-md mx-auto flex flex-col gap-3">
                 <input type="email" placeholder="correo@corporativo.com" class="bg-black border border-gray-800 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan-500">
                 <input type="text" placeholder="Hash de Transacción (TxID)" class="bg-black border border-gray-800 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan-500">
@@ -112,10 +92,9 @@ LANDING_PAGE_HTML = """
 """
 
 @app.get("/", response_class=HTMLResponse)
-def get_landing():
+def root():
     return LANDING_PAGE_HTML
 
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "online", "node": "remi-bunker", "port": 8000, "security": "100% on-premise"}
-
+    return {"status": "online", "node": "remi-bunker", "security": "100% on-premise"}
