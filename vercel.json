@@ -1,8 +1,7 @@
 {
-  "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
+      "source": "/(.*)",
       "destination": "https://remienterprisesuite-3exqr8tuezumc9omtprvwn.streamlit.app/$1"
     }
   ]
