@@ -1,13 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, Response
-from pydantic import BaseModel
-from gtts import gTTS
-import io
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
-
-class VoiceRequest(BaseModel):
-    text: str
 
 LANDING_HTML = """
 <!DOCTYPE html>
@@ -64,11 +58,16 @@ LANDING_HTML = """
                 <div>
                     <h3 class="text-xl font-bold text-cyan-400 mb-2">Núcleo Interactivo de Remi</h3>
                     <p id="remi-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
-                        "Saludos. Nodo operativo sincronizado correctamente con la documentación nativa de Vercel. Operando sin fugas de datos."
+                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y sin fugas de datos."
                     </p>
-                    <button onclick="reproducirVozOficial()" id="btn-voz" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                        🔊 Escuchar voz oficial de Remi (gTTS)
-                    </button>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="hablarRemi('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇪🇸 Escuchar en Español
+                        </button>
+                        <button onclick="hablarRemi('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇺🇸 Listen in English
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,27 +88,38 @@ LANDING_HTML = """
     </footer>
 
     <script>
-        async function reproducirVozOficial() {
-            const btn = document.getElementById('btn-voz');
-            const texto = document.getElementById("remi-msg").innerText;
-            btn.innerText = "⏳ Generando voz oficial...";
-            try {
-                const response = await fetch('/api/v1/tts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: texto })
-                });
-                if (!response.ok) throw new Error("Error en el servidor de voz");
-                const blob = await response.blob();
-                const audioUrl = URL.createObjectURL(blob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-                btn.innerText = "🔊 Escuchar voz oficial de Remi (gTTS)";
-            } catch (err) {
-                console.error(err);
-                alert("No se pudo conectar con el endpoint de voz en FastAPI.");
-                btn.innerText = "🔊 Escuchar voz oficial de Remi (gTTS)";
+        function hablarRemi(lang) {
+            if (!('speechSynthesis' in window)) {
+                alert("Tu navegador no soporta síntesis de voz.");
+                return;
             }
+
+            window.speechSynthesis.cancel(); // Detener cualquier audio previo
+            
+            let texto = lang === 'en' 
+                ? "Greetings Custodian. Operational node synchronized successfully. Operating in bilingual mode without data leaks."
+                : document.getElementById("remi-msg").innerText;
+
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = lang === 'en' ? 'en-US' : 'es-ES';
+            utterance.rate = 1.05; // Velocidad fluida y natural
+            utterance.pitch = 1.1;  // Tono optimizado para Remi
+
+            // Buscar la mejor voz natural disponible en el dispositivo del usuario
+            const voces = window.speechSynthesis.getVoices();
+            const vozElegida = voces.find(v => v.lang.startsWith(lang));
+            if (vozElegida) {
+                utterance.voice = vozElegida;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Precargar voces
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
         }
     </script>
 </body>
@@ -120,17 +130,6 @@ LANDING_HTML = """
 def root():
     return LANDING_HTML
 
-@app.post("/api/v1/tts")
-def generate_voice(payload: VoiceRequest):
-    try:
-        tts = gTTS(text=payload.text, lang='es', slow=False)
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        return Response(content=fp.read(), media_type="audio/mpeg")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "online", "runtime": "vercel-native-fastapi"}
+    return {"status": "online", "runtime": "vercel-bilingual-native"}
