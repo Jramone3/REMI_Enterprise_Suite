@@ -66,8 +66,8 @@ LANDING_HTML = """
                     <p id="remi-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
                         "Saludos. Nodo operativo sincronizado correctamente con la documentación nativa de Vercel. Operando sin fugas de datos."
                     </p>
-                    <button onclick="reproducirVoz()" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                        🔊 Escuchar voz oficial de Remi
+                    <button onclick="reproducirVozOficial()" id="btn-voz" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                        🔊 Escuchar voz oficial de Remi (gTTS)
                     </button>
                 </div>
             </div>
@@ -89,22 +89,26 @@ LANDING_HTML = """
     </footer>
 
     <script>
-        async function reproducirVoz() {
+        async function reproducirVozOficial() {
+            const btn = document.getElementById('btn-voz');
             const texto = document.getElementById("remi-msg").innerText;
+            btn.innerText = "⏳ Generando voz oficial...";
             try {
                 const response = await fetch('/api/v1/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: texto })
                 });
-                if (!response.ok) throw new Error("Error al generar el audio de voz");
+                if (!response.ok) throw new Error("Error en el servidor de voz");
                 const blob = await response.blob();
                 const audioUrl = URL.createObjectURL(blob);
                 const audio = new Audio(audioUrl);
                 audio.play();
+                btn.innerText = "🔊 Escuchar voz oficial de Remi (gTTS)";
             } catch (err) {
                 console.error(err);
-                alert("No se pudo reproducir la voz del núcleo.");
+                alert("No se pudo conectar con el endpoint de voz en FastAPI.");
+                btn.innerText = "🔊 Escuchar voz oficial de Remi (gTTS)";
             }
         }
     </script>
@@ -119,14 +123,10 @@ def root():
 @app.post("/api/v1/tts")
 def generate_voice(payload: VoiceRequest):
     try:
-        # Generamos la voz aprobada de Remi usando gTTS
         tts = gTTS(text=payload.text, lang='es', slow=False)
-        
-        # Guardamos en memoria RAM para entregarlo de inmediato sin saturar disco
         fp = io.BytesIO()
         tts.write_to_fp(fp)
         fp.seek(0)
-        
         return Response(content=fp.read(), media_type="audio/mpeg")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
