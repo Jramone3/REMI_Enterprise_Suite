@@ -1,15 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="REMI Enterprise Suite", version="1.0.0")
 
-class AgentRequest(BaseModel):
-    prompt: str
-
-class LicenseRequest(BaseModel):
-    email: str
-    tx_hash: str
+# Montar la carpeta static para servir los audios MP3 públicos
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 LANDING_HTML = """
 <!DOCTYPE html>
@@ -57,7 +53,7 @@ LANDING_HTML = """
 
         <div class="w-full max-w-3xl bg-slate-900/90 border border-cyan-500/30 rounded-2xl p-8 mb-16 text-left relative shadow-2xl">
             <div class="absolute top-0 right-0 bg-cyan-500/10 text-cyan-400 text-xs font-mono px-4 py-1.5 rounded-bl-xl border-l border-b border-cyan-800/50">
-                ESTADO: ONLINE (ON-PREMISE BRIDGE)
+                ESTADO: ONLINE (STATIC AUDIO SYNC)
             </div>
             <div class="flex items-center gap-6">
                 <div class="w-20 h-20 rounded-full bg-cyan-950 border-2 border-cyan-400/80 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
@@ -69,11 +65,11 @@ LANDING_HTML = """
                         "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y sin fugas de datos."
                     </p>
                     <div class="flex flex-wrap gap-3">
-                        <button onclick="hablarRemi('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                            🇪🇸 Escuchar en Español
+                        <button onclick="reproducirAudioOficial('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇪🇸 Escuchar voz oficial (Español)
                         </button>
-                        <button onclick="hablarRemi('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                            🇺🇸 Listen in English
+                        <button onclick="reproducirAudioOficial('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇺🇸 Listen official voice (English)
                         </button>
                     </div>
                 </div>
@@ -83,11 +79,6 @@ LANDING_HTML = """
         <div id="licenciamiento" class="w-full max-w-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-cyan-900/50 rounded-2xl p-8 text-center">
             <h2 class="text-2xl font-bold mb-3 text-cyan-300">Pasarela Enterprise ($499 USD / Año)</h2>
             <p class="text-slate-400 text-sm mb-6">Modelo de negocio anual corporativo con pagos descentralizados vía Red Base.</p>
-            <div class="max-w-md mx-auto flex flex-col gap-3">
-                <input type="email" id="input-email" placeholder="correo@corporativo.com" class="bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
-                <input type="text" id="input-tx" placeholder="Hash de Transacción (TxID)" class="bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
-                <button onclick="verificarLicencia()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-lg transition text-sm">Generar Clave de Licencia</button>
-            </div>
         </div>
     </main>
 
@@ -96,47 +87,13 @@ LANDING_HTML = """
     </footer>
 
     <script>
-        function hablarRemi(lang) {
-            if (!('speechSynthesis' in window)) {
-                alert("Tu navegador no soporta síntesis de voz.");
-                return;
-            }
-            window.speechSynthesis.cancel();
-            let texto = lang === 'en' 
-                ? "Greetings Custodian. Operational node synchronized successfully. Operating in bilingual mode without data leaks."
-                : document.getElementById("remi-msg").innerText;
-
-            const utterance = new SpeechSynthesisUtterance(texto);
-            utterance.lang = lang === 'en' ? 'en-US' : 'es-ES';
-            utterance.rate = 1.05;
-            utterance.pitch = 1.1;
-
-            const voces = window.speechSynthesis.getVoices();
-            const vozElegida = voces.find(v => v.lang.startsWith(lang));
-            if (vozElegida) {
-                utterance.voice = vozElegida;
-            }
-            window.speechSynthesis.speak(utterance);
-        }
-
-        async function verificarLicencia() {
-            const email = document.getElementById("input-email").value;
-            const tx = document.getElementById("input-tx").value;
-            if(!email || !tx) {
-                alert("Por favor completa ambos campos.");
-                return;
-            }
-            try {
-                const res = await fetch('/api/v1/license/verify', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email: email, tx_hash: tx })
-                });
-                const data = await res.json();
-                alert("Respuesta del Núcleo: " + JSON.stringify(data));
-            } catch(e) {
-                alert("Error al conectar con la pasarela.");
-            }
+        function reproducirAudioOficial(lang) {
+            const audioPath = lang === 'en' ? '/static/remi_saludo_en.mp3' : '/static/remi_saludo_es.mp3';
+            const audio = new Audio(audioPath);
+            audio.play().catch(err => {
+                console.error("Error al reproducir audio:", err);
+                alert("Haz clic en la página primero para permitir la reproducción de audio.");
+            });
         }
     </script>
 </body>
@@ -149,13 +106,4 @@ def root():
 
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "online", "runtime": "vercel-native-fastapi", "bunker": "connected"}
-
-@app.post("/api/v1/agent/run")
-def run_agent(payload: AgentRequest):
-    return {"status": "success", "agent": "Remi-Core", "response": f"Procesado prompt: {payload.prompt}"}
-
-@app.post("/api/v1/license/verify")
-def verify_license(payload: LicenseRequest):
-    return {"status": "verified", "license_key": "REMI-ENT-2026-SECURE", "client": payload.email}
-
+    return {"status": "online", "runtime": "vercel-static-audio", "bunker": "synchronized"}
