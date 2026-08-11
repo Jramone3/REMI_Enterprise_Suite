@@ -1,11 +1,21 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from gtts import gTTS
+import io
 
 app = FastAPI(title="REMI Enterprise Suite", version="1.0.0")
 
-# Montar la carpeta static para servir los audios MP3 públicos
-app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.get("/api/v1/tts")
+def text_to_speech(text: str = "Saludos Custodio.", lang: str = "es"):
+    try:
+        # Generar audio al vuelo en memoria RAM (evita problemas de escritura en disco en Vercel)
+        tts = gTTS(text=text, lang=lang, slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return Response(content=fp.read(), media_type="audio/mpeg")
+    except Exception as e:
+        return {"error": str(e)}
 
 LANDING_HTML = """
 <!DOCTYPE html>
@@ -42,18 +52,9 @@ LANDING_HTML = """
             Despliega agentes autónomos y herramientas de auditoría en tu propia infraestructura sin pagar tarifas por token ni arriesgar la confidencialidad de tus datos.
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-4 mb-16">
-            <a href="https://github.com/Jramone3/REMI_Enterprise_Suite" target="_blank" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
-                Ver Repositorio Oficial
-            </a>
-            <a href="#licenciamiento" class="bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-800/60 font-semibold px-8 py-3.5 rounded-xl transition">
-                Licenciamiento Enterprise ($499 USD)
-            </a>
-        </div>
-
         <div class="w-full max-w-3xl bg-slate-900/90 border border-cyan-500/30 rounded-2xl p-8 mb-16 text-left relative shadow-2xl">
             <div class="absolute top-0 right-0 bg-cyan-500/10 text-cyan-400 text-xs font-mono px-4 py-1.5 rounded-bl-xl border-l border-b border-cyan-800/50">
-                ESTADO: ONLINE (STATIC AUDIO SYNC)
+                ESTADO: ONLINE (DYNAMIC TTS STREAM)
             </div>
             <div class="flex items-center gap-6">
                 <div class="w-20 h-20 rounded-full bg-cyan-950 border-2 border-cyan-400/80 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
@@ -62,23 +63,18 @@ LANDING_HTML = """
                 <div>
                     <h3 class="text-xl font-bold text-cyan-400 mb-2">Núcleo Interactivo de Remi</h3>
                     <p id="remi-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
-                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y sin fugas de datos."
+                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y dinámico."
                     </p>
                     <div class="flex flex-wrap gap-3">
-                        <button onclick="reproducirAudioOficial('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                            🇪🇸 Escuchar voz oficial (Español)
+                        <button onclick="reproducirDinamico('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇪🇸 Escuchar voz dinámica (Español)
                         </button>
-                        <button onclick="reproducirAudioOficial('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                            🇺🇸 Listen official voice (English)
+                        <button onclick="reproducirDinamico('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇺🇸 Listen dynamic voice (English)
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div id="licenciamiento" class="w-full max-w-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-cyan-900/50 rounded-2xl p-8 text-center">
-            <h2 class="text-2xl font-bold mb-3 text-cyan-300">Pasarela Enterprise ($499 USD / Año)</h2>
-            <p class="text-slate-400 text-sm mb-6">Modelo de negocio anual corporativo con pagos descentralizados vía Red Base.</p>
         </div>
     </main>
 
@@ -87,12 +83,16 @@ LANDING_HTML = """
     </footer>
 
     <script>
-        function reproducirAudioOficial(lang) {
-            const audioPath = lang === 'en' ? '/static/remi_saludo_en.mp3' : '/static/remi_saludo_es.mp3';
-            const audio = new Audio(audioPath);
+        function reproducirDinamico(lang) {
+            const texto = lang === 'en' 
+                ? "Greetings Custodian. Operational node synchronized successfully with dynamic backend." 
+                : document.getElementById("remi-msg").innerText;
+            
+            const audioUrl = `/api/v1/tts?text=${encodeURIComponent(texto)}&lang=${lang}`;
+            const audio = new Audio(audioUrl);
             audio.play().catch(err => {
-                console.error("Error al reproducir audio:", err);
-                alert("Haz clic en la página primero para permitir la reproducción de audio.");
+                console.error("Error al reproducir audio dinámico:", err);
+                alert("Haz clic en la página primero para habilitar el audio.");
             });
         }
     </script>
@@ -106,4 +106,4 @@ def root():
 
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "online", "runtime": "vercel-static-audio", "bunker": "synchronized"}
+    return {"status": "online", "runtime": "vercel-dynamic-tts", "bunker": "synchronized"}
