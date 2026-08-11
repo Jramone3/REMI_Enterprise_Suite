@@ -1,21 +1,11 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from gtts import gTTS
-import io
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="REMI Enterprise Suite", version="1.0.0")
 
-@app.get("/api/v1/tts")
-def text_to_speech(text: str = "Saludos Custodio.", lang: str = "es"):
-    try:
-        # Generar audio al vuelo en memoria RAM (evita problemas de escritura en disco en Vercel)
-        tts = gTTS(text=text, lang=lang, slow=False)
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        return Response(content=fp.read(), media_type="audio/mpeg")
-    except Exception as e:
-        return {"error": str(e)}
+# Montar la carpeta static para servir los audios MP3 oficiales de forma directa
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 LANDING_HTML = """
 <!DOCTYPE html>
@@ -54,7 +44,7 @@ LANDING_HTML = """
 
         <div class="w-full max-w-3xl bg-slate-900/90 border border-cyan-500/30 rounded-2xl p-8 mb-16 text-left relative shadow-2xl">
             <div class="absolute top-0 right-0 bg-cyan-500/10 text-cyan-400 text-xs font-mono px-4 py-1.5 rounded-bl-xl border-l border-b border-cyan-800/50">
-                ESTADO: ONLINE (DYNAMIC TTS STREAM)
+                ESTADO: ONLINE (OFFICIAL STATIC AUDIO)
             </div>
             <div class="flex items-center gap-6">
                 <div class="w-20 h-20 rounded-full bg-cyan-950 border-2 border-cyan-400/80 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
@@ -63,14 +53,14 @@ LANDING_HTML = """
                 <div>
                     <h3 class="text-xl font-bold text-cyan-400 mb-2">Núcleo Interactivo de Remi</h3>
                     <p id="remi-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
-                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y dinámico."
+                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y sin fugas de datos."
                     </p>
                     <div class="flex flex-wrap gap-3">
-                        <button onclick="reproducirDinamico('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                            🇪🇸 Escuchar voz dinámica (Español)
+                        <button onclick="reproducirAudioOficial('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇪🇸 Escuchar voz oficial (Español)
                         </button>
-                        <button onclick="reproducirDinamico('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
-                            🇺🇸 Listen dynamic voice (English)
+                        <button onclick="reproducirAudioOficial('en')" class="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
+                            🇺🇸 Listen official voice (English)
                         </button>
                     </div>
                 </div>
@@ -83,16 +73,12 @@ LANDING_HTML = """
     </footer>
 
     <script>
-        function reproducirDinamico(lang) {
-            const texto = lang === 'en' 
-                ? "Greetings Custodian. Operational node synchronized successfully with dynamic backend." 
-                : document.getElementById("remi-msg").innerText;
-            
-            const audioUrl = `/api/v1/tts?text=${encodeURIComponent(texto)}&lang=${lang}`;
-            const audio = new Audio(audioUrl);
+        function reproducirAudioOficial(lang) {
+            const audioPath = lang === 'en' ? '/static/remi_saludo_en.mp3' : '/static/remi_saludo_es.mp3';
+            const audio = new Audio(audioPath);
             audio.play().catch(err => {
-                console.error("Error al reproducir audio dinámico:", err);
-                alert("Haz clic en la página primero para habilitar el audio.");
+                console.error("Error al reproducir audio:", err);
+                alert("Haz clic en la página primero para permitir la reproducción de audio.");
             });
         }
     </script>
@@ -106,4 +92,4 @@ def root():
 
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "online", "runtime": "vercel-dynamic-tts", "bunker": "synchronized"}
+    return {"status": "online", "runtime": "vercel-static-audio", "bunker": "synchronized"}
