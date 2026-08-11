@@ -1,11 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="REMI Enterprise Suite", version="1.0.0")
-
-# Montar la carpeta static para servir los audios MP3 oficiales de forma directa
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 LANDING_HTML = """
 <!DOCTYPE html>
@@ -44,7 +40,7 @@ LANDING_HTML = """
 
         <div class="w-full max-w-3xl bg-slate-900/90 border border-cyan-500/30 rounded-2xl p-8 mb-16 text-left relative shadow-2xl">
             <div class="absolute top-0 right-0 bg-cyan-500/10 text-cyan-400 text-xs font-mono px-4 py-1.5 rounded-bl-xl border-l border-b border-cyan-800/50">
-                ESTADO: ONLINE (OFFICIAL STATIC AUDIO)
+                ESTADO: ONLINE (ABSOLUTE AUDIO SYNC)
             </div>
             <div class="flex items-center gap-6">
                 <div class="w-20 h-20 rounded-full bg-cyan-950 border-2 border-cyan-400/80 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
@@ -53,7 +49,7 @@ LANDING_HTML = """
                 <div>
                     <h3 class="text-xl font-bold text-cyan-400 mb-2">Núcleo Interactivo de Remi</h3>
                     <p id="remi-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
-                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando en modo bilingüe y sin fugas de datos."
+                        "Saludos Custodio. Nodo operativo sincronizado correctamente. Operando con enlaces absolutos en Vercel."
                     </p>
                     <div class="flex flex-wrap gap-3">
                         <button onclick="reproducirAudioOficial('es')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs px-4 py-2 rounded-lg font-mono transition flex items-center gap-2">
@@ -74,7 +70,11 @@ LANDING_HTML = """
 
     <script>
         function reproducirAudioOficial(lang) {
-            const audioPath = lang === 'en' ? '/static/remi_saludo_en.mp3' : '/static/remi_saludo_es.mp3';
+            // Usamos URLs absolutas directas al raw de GitHub para garantizar que Vercel cargue el MP3 sin errores de enrutamiento serverless
+            const audioPath = lang === 'en' 
+                ? 'https://raw.githubusercontent.com/Jramone3/REMI_Enterprise_Suite/main/static/remi_saludo_en.mp3' 
+                : 'https://raw.githubusercontent.com/Jramone3/REMI_Enterprise_Suite/main/static/remi_saludo_es.mp3';
+            
             const audio = new Audio(audioPath);
             audio.play().catch(err => {
                 console.error("Error al reproducir audio:", err);
@@ -92,4 +92,4 @@ def root():
 
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "online", "runtime": "vercel-static-audio", "bunker": "synchronized"}
+    return {"status": "online", "runtime": "vercel-absolute-audio", "bunker": "synchronized"}
