@@ -146,21 +146,29 @@ if prompt := st.chat_input("Type a query or instruction for REMI:"):
 st.markdown("---")
 st.markdown("REMI Enterprise Suite © 2026 — Developed by jramonrivasg")
 
-
 def render_pasarela_fiscal_streamlit():
     st.markdown("---")
-    st.write("### 🛡️ Pasarela de Licenciamiento y Trazabilidad Fiscal (REMI AI)")
-    st.write("**Entidad Emisora:** REMI Enterprise Systems S.A.")
-    st.write("**Canal de Facturación:** Facturación Corporativa Automatizada")
-    st.write("**Soporte Fiscal / Legal:** facturacion@remi-enterprise.com")
+    st.write("### 🛡️ Pasarela de Licenciamiento y Trazabilidad (REMI AI)")
+    st.write("**Entidad Emisora:** REMI Enterprise Core")
+    st.write("**Canal de Licenciamiento:** Emisión Automatizada de Claves")
+    st.write("**Soporte Técnico:** soporte@remi-enterprise.com")
     st.write("**Producto:** Licencia Enterprise - REMI AI Suite")
+
+    # Definición de variables internas de la pasarela para evitar errores
+    contribuyente = "Cliente Enterprise"
+    rif = "N/D (Licenciamiento Global)"
+    domicilio = "Infraestructura Cloud / On-Premise"
+    producto = "Licencia Anual REMI AI Suite"
+    monto_usd = 499
+    red = "Base Network (ChainID: 8453)"
+    wallet = REMI_PAYMENT_ADDRESS
 
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.markdown(f"**Contribuyente:** {contribuyente}")
-        st.markdown(f"**RIF:** {rif}")
-        st.markdown(f"**Domicilio:** {domicilio}")
+        st.markdown(f"**Cliente:** {contribuyente}")
+        st.markdown(f"**Identificador:** {rif}")
+        st.markdown(f"**Ubicación:** {domicilio}")
         st.markdown(f"**Producto:** {producto}")
         st.markdown(f"**Monto a Pagar:** ${monto_usd}.00 USD")
         st.markdown(f"**Red Blockchain:** {red}")
