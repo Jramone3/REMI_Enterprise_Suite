@@ -149,15 +149,11 @@ st.markdown("REMI Enterprise Suite © 2026 — Developed by jramonrivasg")
 
 def render_pasarela_fiscal_streamlit():
     st.markdown("---")
-    st.subheader("🛡️ Pasarela de Licenciamiento y Trazabilidad Fiscal (REMI AI)")
-    
-    contribuyente = "Jesús Ramón Rivas García"
-    rif = "V050153998"
-    domicilio = "Calle El Samán, Casa Nro 17, Sector Porvorín, Guayabita, Aragua."
-    producto = "Licencia Enterprise - REMI AI Suite"
-    monto_usd = 499
-    red = "Base Network (ChainID: 8453)"
-    wallet = "0x96De980a766CCb10A19B6962587e2b61B650b372"
+    st.write("### 🛡️ Pasarela de Licenciamiento y Trazabilidad Fiscal (REMI AI)")
+    st.write("**Entidad Emisora:** REMI Enterprise Systems S.A.")
+    st.write("**Canal de Facturación:** Facturación Corporativa Automatizada")
+    st.write("**Soporte Fiscal / Legal:** facturacion@remi-enterprise.com")
+    st.write("**Producto:** Licencia Enterprise - REMI AI Suite")
 
     col1, col2 = st.columns([1, 1])
 
