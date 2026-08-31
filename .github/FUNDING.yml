@@ -1,0 +1,6 @@
+# Configuración de patrocinio para REMI Enterprise Suite
+github: Jramone3
+# Puedes añadir plataformas de pago adicionales descomentando y editando estas líneas:
+# patreon: tu_usuario_patreon
+# ko_fi: tu_usuario_kofi
+# custom: ["https://paypal.me/tu_usuario", "Soporte Comercial REMI"]
