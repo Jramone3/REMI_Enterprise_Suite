@@ -19,10 +19,27 @@ import streamlit as st
 
 # Page configuration
 st.set_page_config(
-    page_title="REMI Enterprise Suite — Demo & Licensing",
-    page_icon="assets/remi_logo.png",
-    layout="centered",
+    page_title="REMI Enterprise Suite v1.1.0-enterprise — Demo & Licensing",
+    page_icon="🤖",
+    layout="wide"
 )
+
+# Función de voz optimizada para la interacción web/local de REMI
+def hablar_remi_web(texto):
+    # Lógica de síntesis integrada para la interfaz
+    script_js = f"""
+    <script>
+    if ('speechSynthesis' in window) {{
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("{texto}");
+        utterance.lang = 'es-ES';
+        utterance.pitch = 1.3;
+        utterance.rate = 1.05;
+        window.speechSynthesis.speak(utterance);
+    }}
+    </script>
+    """
+    st.components.v1.html(script_js, height=0)
 
 # Externalized Configuration via Environment Variables with Secure Placeholders
 REMI_LOCAL_CORE_URL = os.environ.get("REMI_LOCAL_CORE_URL", "http://localhost:11434/api/chat")
@@ -142,6 +159,9 @@ if prompt := st.chat_input("Type a query or instruction for REMI:"):
 
             st.markdown(assistant_text)
             st.session_state.messages.append({"role": "assistant", "content": assistant_text})
+            
+            # Ejecutar la voz optimizada de REMI automáticamente tras la respuesta
+            hablar_remi_web(assistant_text)
 
 st.markdown("---")
 st.markdown("REMI Enterprise Suite © 2026 — Developed by jramonrivasg")
@@ -182,4 +202,5 @@ def render_pasarela_fiscal_streamlit():
         st.image(buf.getvalue(), caption="QR Oficial - Base Network", width=250)
 
     st.markdown("---")
+
 render_pasarela_fiscal_streamlit()
