@@ -27,3 +27,11 @@ The Aurum Protocol (Aurum Fortress Protocol) is the governance and technical fra
 ## Disclaimer
 This system is implemented as a private custody solution. Unauthorized access to cold storage nodes or pre-authorized security wallets will trigger predefined alerting, access revocation, and incident response actions.
 
+
+## Support & Sponsorship
+
+If you would like to support the development of REMI and contribute to the project's ecosystem, you can scan the QR code below:
+
+<p align="center">
+  <img src="assets/qr_funding.png" alt="Funding QR Code" width="250"/>
+</p>
