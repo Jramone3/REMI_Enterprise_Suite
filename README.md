@@ -33,5 +33,5 @@ This system is implemented as a private custody solution. Unauthorized access to
 If you would like to support the development of REMI and contribute to the project's ecosystem, you can scan the QR code below:
 
 <p align="center">
-  <img src="assets/qr_funding.png" alt="Funding QR Code" width="250"/>
+  <a href="https://basescan.org/address/0x96De980a766CCb10A19B6962587e2b61B650b372" target="_blank"><img src="assets/qr_funding.png" alt="Funding QR Code" width="250"/></a>
 </p>
