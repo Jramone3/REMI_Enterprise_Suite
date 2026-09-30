@@ -1,3 +1,42 @@
-requirements.txt
-assets/
-assets/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Environments
+.env
+.env.*
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Build / packaging
+dist/
+build/
+.eggs/
+*.egg-info/
+
+# Secrets and keys
+secrets/
+
+# Optional: Node
+node_modules/
+
+# Ignore static large assets if you store them elsewhere (uncomment to enable)
+# assets/
