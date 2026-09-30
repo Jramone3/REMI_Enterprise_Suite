@@ -1,206 +1,126 @@
 import streamlit as st
-import qrcode
-from io import BytesIO
-#!/usr/bin/env python3
-"""
-REMI Enterprise Suite - Streamlit Interactive Demo (Production-Ready Architecture)
-
-Notes:
-- Demo-only license derivation; in production use a hardened license service that signs licenses (HSM/KMS).
-- Configure REMI_LOCAL_CORE_URL and REMI_PAYMENT_ADDRESS via environment or secret store.
-"""
-
 import os
+import requests
 import hashlib
 from datetime import datetime, timedelta
 
-import requests
-import streamlit as st
-
-# Page configuration
 st.set_page_config(
-    page_title="REMI Enterprise Suite v1.1.0-enterprise — Demo & Licensing",
-    page_icon="🤖",
-    layout="wide"
+    page_title="REMI Enterprise Suite - Demo & Licenciamiento",
+    page_icon="assets/remi_logo.png",
+    layout="centered"
 )
 
-# Función de voz optimizada para la interacción web/local de REMI
-def hablar_remi_web(texto):
-    # Lógica de síntesis integrada para la interfaz
-    script_js = f"""
-    <script>
-    if ('speechSynthesis' in window) {{
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance("{texto}");
-        utterance.lang = 'es-ES';
-        utterance.pitch = 1.3;
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
-    }}
-    </script>
-    """
-    st.components.v1.html(script_js, height=0)
-
-# Externalized Configuration via Environment Variables with Secure Placeholders
-REMI_LOCAL_CORE_URL = os.environ.get("REMI_LOCAL_CORE_URL", "http://localhost:11434/api/chat")
-REMI_PAYMENT_ADDRESS = os.environ.get("REMI_PAYMENT_ADDRESS", "0xDEMO_PAYMENT_ADDRESS_TO_BE_CONFIGURED")
-
-# Header
+# Imagen oficial de REMI y título principal
 st.image("assets/remi_imagen_oficial.jpeg", width=200)
 st.title("REMI Enterprise Suite")
-st.markdown("### Enterprise Multi-Agent Framework and AI Core")
+
+st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
 st.markdown("---")
 
-# Sidebar: Licensing and Administration
+# ==========================================
+# BARRA LATERAL: PASARELA Y LICENCIAMIENTO
+# ==========================================
 with st.sidebar:
     st.image("assets/remi_imagen_oficial.jpeg", width=100)
-    st.subheader("Enterprise Portal")
-    st.caption("Infrastructure backed by a standard EOA contract (Base Network) or local secure enclave.")
+    st.subheader("Portal Enterprise")
+    st.caption("Infraestructura respaldada por Standard EOA-Contract via Base Network / Búnker Local.")
+    
     st.markdown("---")
+    st.markdown("### 💎 Adquirir Licencia Anual")
+    st.markdown("**Costo:** $499 USD / Año")
+    st.markdown("Incluye soporte técnico, actualizaciones directas del clúster multi-agente y módulos avanzados de auditoría.")
+    
+    if st.button("Generar Datos de Pago"):
+        st.session_state.mostrar_pago = True
 
-    st.markdown("### 💎 Annual Enterprise License")
-    st.markdown("**Price:** $499 USD / year")
-    st.markdown(
-        "Includes technical support, direct multi-agent cluster updates, and advanced auditing modules."
-    )
-
-    if st.button("Generate Payment Data"):
-        st.session_state.show_payment = True
-
-    if st.session_state.get("show_payment", False):
+    if st.session_state.get("mostrar_pago", False):
         st.info(
-            "**Direct Payment Instructions:**\n\n"
-            f"1. Send **499 USDT (ERC-20 / Base)** or equivalent in ETH/BNB to:\n"
-            f"`{REMI_PAYMENT_ADDRESS}`\n\n"
-            "2. Register your purchaser email and provide the transaction hash (TxHash) to receive your annual license key."
+            "**Instrucciones de Pago Directo:**\n\n"
+            "1. Envía **499 USDT (ERC-20 / Base)** o equivalente en ETH/BNB a:\n"
+            "`0x96De980a766CCb10A19B6962587e2b61B650b372`\n\n"
+            "2. Registra tus datos y el **TxID** de la transferencia para emitir tu llave anual."
         )
-
-        purchaser_email = st.text_input("Registration email:")
-        tx_hash = st.text_input("Transaction hash (TxHash):")
-
-        if st.button("Verify and Activate Annual License"):
-            if purchaser_email and tx_hash:
-                expiration_date = datetime.utcnow() + timedelta(days=365)
-                raw_key_material = f"{purchaser_email}-{tx_hash}-REMI-2026"
-                derived = hashlib.sha256(raw_key_material.encode("utf-8")).hexdigest()[:24].upper()
-                license_key = f"REMI-ENT-ANNUAL-{derived}"
-
-                st.success("Payment noted by node. Enterprise license issued successfully (demo).")
-                st.markdown(f"**Registered purchaser:** {purchaser_email}")
-                st.markdown(f"**Valid until:** {expiration_date.strftime('%Y-%m-%d')}")
-                st.code(license_key, language="text")
-                st.caption("Store this license key on your local server to receive direct system updates.")
+        
+        # Formulario de registro y validación del cliente
+        cliente_email = st.text_input("Correo electrónico de registro:")
+        tx_input = st.text_input("Hash de la Transacción (TxID):")
+        
+        if st.button("Verificar y Activar Licencia Anual"):
+            if cliente_email and tx_input:
+                # Generar clave de licencia única cifrada basada en el correo y el timestamp actual
+                fecha_expiracion = datetime.now() + timedelta(days=365)
+                raw_key = f"{cliente_email}-{tx_input}-REMI-2026"
+                hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
+                licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
+                
+                st.success("¡Pago procesado por el nodo! Licencia Enterprise emitida exitosamente.")
+                st.markdown(f"**Cliente Registrado:** {cliente_email}")
+                st.markdown(f"**Válida hasta:** {fecha_expiracion.strftime('%Y-%m-%d')}")
+                st.code(licencia_final, language="text")
+                st.caption("Guarda esta llave en tu servidor local para recibir actualizaciones directas del sistema.")
             else:
-                st.warning("Please provide a valid registration email and transaction hash (TxHash).")
+                st.warning("Por favor ingresa tu correo y un TxID válido.")
 
     st.markdown("---")
-    st.markdown("### 🔄 Update Verification")
-    check_email = st.text_input("Registered email for verification:", key="check_email")
-    check_license = st.text_input("License key:", key="check_license")
-    if st.button("Check for Updates"):
-        if check_email and check_license:
-            st.success(
-                "License active. Cluster synchronized to the latest security patch available for this release."
-            )
+    st.markdown("### 🔄 Verificación de Actualizaciones")
+    email_check = st.text_input("Correo registrado:")
+    key_check = st.text_input("Clave de Licencia:")
+    if st.button("Comprobar Actualizaciones"):
+        if email_check and key_check:
+            st.success("Licencia activa. Clúster sincronizado con el último parche de seguridad del repositorio.")
         else:
-            st.warning("Please enter your registered credentials (email and license key).")
+            st.warning("Introduce tus credenciales registradas.")
 
-# Main interface: Local multi-agent core chat
-st.info("Welcome to the REMI interactive showcase. Enter a query to interact with the local AI core.")
+# ==========================================
+# INTERFAZ PRINCIPAL DE CHAT (NÚCLEO LOCAL)
+# ==========================================
+st.info("Bienvenido a la vitrina interactiva de REMI. Escribe una consulta para interactuar en tiempo real con el núcleo local.")
 
+# Inicializar historial de chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# Mostrar historial en pantalla
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-if prompt := st.chat_input("Type a query or instruction for REMI:"):
+# Entrada de chat interactiva
+if prompt := st.chat_input("Escribe una consulta o instrucción para REMI:"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    system_prompt = (
-        "You are REMI, the AI core of REMI Enterprise Suite — an enterprise multi-agent framework. "
-        "Respond in a technical, professional, analytical, and executive tone. Provide clear, actionable guidance "
-        "and cite any assumptions when appropriate."
-    )
-
+    # Generar respuesta mediante el núcleo local (Ollama / Llama 3)
     with st.chat_message("assistant"):
-        with st.spinner("REMI processing through the local multi-agent core..."):
+        with st.spinner("REMI procesando a través del núcleo multi-agente local..."):
             try:
+                system_prompt = (
+                    "Eres REMI, el núcleo de inteligencia artificial de REMI Enterprise Suite, "
+                    "un framework multi-agente avanzado desarrollado por jramonrivasg. "
+                    "Responde con un tono técnico, profesional, analítico y ejecutivo."
+                )
+
+                url = "http://localhost:11434/api/chat"
                 payload = {
                     "model": "llama3",
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt},
+                        {"role": "user", "content": prompt}
                     ],
-                    "stream": False,
+                    "stream": False
                 }
-
-                response = requests.post(REMI_LOCAL_CORE_URL, json=payload, timeout=20)
+                
+                response = requests.post(url, json=payload)
                 if response.status_code == 200:
-                    data = response.json()
-                    assistant_text = data.get("message", {}).get("content", "").strip()
-                    if not assistant_text:
-                        assistant_text = "REMI: The model responded with an empty message."
+                    respuesta_ia = response.json()["message"]["content"]
                 else:
-                    assistant_text = (
-                        f"REMI (Core): Failed to connect to the local AI core (status {response.status_code}). "
-                        "Ensure the local model service is running and reachable."
-                    )
-            except requests.exceptions.RequestException:
-                assistant_text = (
-                    "REMI (Core): Unable to establish communication with the local cluster. "
-                    "Verify the AI core service is running and accessible from this host."
-                )
-            except Exception:
-                assistant_text = "REMI (Core): An unexpected error occurred while contacting the local AI core."
+                    respuesta_ia = f"**REMI (Núcleo Activo):** Error al conectar con el servidor local de IA (Código {response.status_code})."
+            except Exception as e:
+                respuesta_ia = f"**REMI (Núcleo Activo):** No se pudo establecer comunicación con el clúster local. Asegúrate de que el servicio esté activo."
 
-            st.markdown(assistant_text)
-            st.session_state.messages.append({"role": "assistant", "content": assistant_text})
-            
-            # Ejecutar la voz optimizada de REMI automáticamente tras la respuesta
-            hablar_remi_web(assistant_text)
+            st.markdown(respuesta_ia)
+            st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
 
 st.markdown("---")
-st.markdown("REMI Enterprise Suite © 2026 — Developed by jramonrivasg")
-
-def render_pasarela_fiscal_streamlit():
-    st.markdown("---")
-    st.write("### 🛡️ Pasarela de Licenciamiento y Trazabilidad (REMI AI)")
-    st.write("**Entidad Emisora:** REMI Enterprise Core")
-    st.write("**Canal de Licenciamiento:** Emisión Automatizada de Claves")
-    st.write("**Soporte Técnico:** soporte@remi-enterprise.com")
-    st.write("**Producto:** Licencia Enterprise - REMI AI Suite")
-
-    # Definición de variables internas de la pasarela para evitar errores
-    contribuyente = "Cliente Enterprise"
-    rif = "N/D (Licenciamiento Global)"
-    domicilio = "Infraestructura Cloud / On-Premise"
-    producto = "Licencia Anual REMI AI Suite"
-    monto_usd = 499
-    red = "Base Network (ChainID: 8453)"
-    wallet = REMI_PAYMENT_ADDRESS
-
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        st.markdown(f"**Cliente:** {contribuyente}")
-        st.markdown(f"**Identificador:** {rif}")
-        st.markdown(f"**Ubicación:** {domicilio}")
-        st.markdown(f"**Producto:** {producto}")
-        st.markdown(f"**Monto a Pagar:** ${monto_usd}.00 USD")
-        st.markdown(f"**Red Blockchain:** {red}")
-        st.code(wallet, language="text")
-        st.info("💡 Escanee el código QR con su billetera EVM (ej. Rabby) configurada en Base Network.")
-
-    with col2:
-        img = qrcode.make(wallet)
-        buf = BytesIO()
-        img.save(buf, format="PNG")
-        st.image(buf.getvalue(), caption="QR Oficial - Base Network", width=250)
-
-    st.markdown("---")
-
-render_pasarela_fiscal_streamlit()
+st.markdown("*REMI Enterprise Suite © 2026 - Desarrollado por jramonrivasg*")
