@@ -1,6 +1,7 @@
 REMI — Agentic Patrimonial Guardian
 Enterprise-grade agentic custody system for safeguarding critical assets with continuous monitoring and auditable controls.
 Status: OPERATIONAL | Version: v1.1.0-enterprise | Protocol: AURUM-v0.8
+![REMI Enterprise CI](https://github.com/Jramone3/REMI_Enterprise_Suite/actions/workflows/ci.yml/badge.svg)
 
 What REMI is
 REMI is an agentic custody system designed for preservation and surveillance of high-value assets within a hardened operational environment (the "Fortress Bunker"). It operates as a sovereign digital preservation and monitoring framework focused on enterprise security, traceability, and controlled updates.
