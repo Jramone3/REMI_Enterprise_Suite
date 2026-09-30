@@ -8,11 +8,11 @@ __pycache__/
 env/
 venv/
 
-# Environments
+# Environment files
 .env
 .env.*
 
-# Editor/IDE
+# IDE/editor files
 .vscode/
 .idea/
 *.sublime-project
@@ -35,8 +35,5 @@ build/
 # Secrets and keys
 secrets/
 
-# Optional: Node
+# Optional npm
 node_modules/
-
-# Ignore static large assets if you store them elsewhere (uncomment to enable)
-# assets/
