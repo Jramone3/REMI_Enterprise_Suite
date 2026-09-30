@@ -1,0 +1,9 @@
+pytest
+pytest-cov
+pytest-mock
+flake8
+black
+isort
+coverage
+pre-commit
+python-dotenv
