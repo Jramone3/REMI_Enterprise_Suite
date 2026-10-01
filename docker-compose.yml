@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  streamlit:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - REMI_DB_NAME=remi_enterprise
+      - BASE_RPC_URL=${BASE_RPC_URL:-https://mainnet.base.org}
+      - REMI_PAYMENT_ADDRESS=${REMI_PAYMENT_ADDRESS}
+      - EXPECTED_TOKEN_ADDRESS=${EXPECTED_TOKEN_ADDRESS:-}
+      - EXPECTED_TOKEN_DECIMALS=${EXPECTED_TOKEN_DECIMALS:-6}
+      - LLM_HOST=${LLM_HOST:-http://host.docker.internal:11434}
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:
