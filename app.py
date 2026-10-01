@@ -181,9 +181,9 @@ if prompt := st.chat_input("Escribe una consulta o instrucción para REMI:"):
                 if response.status_code == 200:
                     respuesta_ia = response.json()["message"]["content"]
                 else:
-                    respuesta_ia = f"**REMI (Núcleo Activo):** Error al conectar con el servidor local de IA (Código {response.status_code})."
+                    respuesta_ia = "**REMI (Núcleo Activo):** Error al conectar con el servidor local de IA (Código {response.status_code})."
             except Exception:
-                respuesta_ia = f"**REMI (Núcleo Activo):** No se pudo establecer comunicación con el clúster local. Asegúrate de que el servicio esté activo."
+                respuesta_ia = "**REMI (Núcleo Activo):** No se pudo establecer comunicación con el clúster local. Asegúrate de que el servicio esté activo."
 
             st.markdown(respuesta_ia)
             st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
