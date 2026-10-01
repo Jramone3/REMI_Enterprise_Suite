@@ -1,4 +1,3 @@
-import pytest
 from remi_tx_validator import verify_base_transaction
 
 def test_invalid_tx_hash_format():

@@ -1,4 +1,3 @@
-import pytest
 import remi_tx_validator as rtv
 
 def test_verify_native_success(monkeypatch):

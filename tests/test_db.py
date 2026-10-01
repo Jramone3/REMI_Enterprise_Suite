@@ -1,5 +1,4 @@
 import mongomock
-import pytest
 from db import save_license, find_license_by_email
 
 def test_save_and_find_license(monkeypatch):
