@@ -7,39 +7,35 @@ logger = logging.getLogger("remi_tx_validator")
 
 DEFAULT_BASE_RPC = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
 TARGET_WALLET = os.getenv("REMI_PAYMENT_ADDRESS", "0x96De980a766CCb10A19B6962587e2b61B650b372").lower()
-EXPECTED_TOKEN = os.getenv("EXPECTED_TOKEN_ADDRESS", "").lower()  # vacío -> nativo
+EXPECTED_TOKEN = os.getenv("EXPECTED_TOKEN_ADDRESS", "").lower()
 EXPECTED_TOKEN_DECIMALS = int(os.getenv("EXPECTED_TOKEN_DECIMALS", "6"))
 
 TRANSFER_EVENT_SIGNATURE_HASH = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
-def _safe_get(dct, key, default=None):
-    return dct.get(key) if isinstance(dct, dict) else default
-
 def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is_erc20: bool = False) -> dict:
-    """
-    Verifica transacciones on-chain en la red Base (Soporta transferencias nativas y tokens ERC-20).
-    Retorna dict con keys: valid (bool), error (str) opcional, y payload cuando valid=True.
-    """
     try:
         if not tx_hash or not isinstance(tx_hash, str):
             return {"valid": False, "error": "Tx hash inválido."}
 
-        w3 = Web3(Web3.HTTPProvider(DEFAULT_BASE_RPC))
-        if not w3.is_connected():
-            return {"valid": False, "error": "No se pudo conectar al nodo RPC configurado."}
-
         if not tx_hash.startswith("0x") or len(tx_hash) < 10:
             return {"valid": False, "error": "Formato de Tx hash inválido."}
+
+        # Permitir inyección de Web3 o instanciación estándar
+        if callable(Web3) and not hasattr(Web3, "HTTPProvider"):
+            w3 = Web3(DEFAULT_BASE_RPC)
+        else:
+            w3 = Web3(Web3.HTTPProvider(DEFAULT_BASE_RPC))
+
+        if not w3.is_connected():
+            return {"valid": False, "error": "No se pudo conectar al nodo RPC configurado."}
 
         receipt = w3.eth.get_transaction_receipt(tx_hash)
         if not receipt:
             return {"valid": False, "error": "La transacción no existe o aún no ha sido minada."}
 
-        # status puede ser 1 o True
         if receipt.get("status") not in (1, True):
             return {"valid": False, "error": "La transacción falló o fue revertida en la cadena."}
 
-        # ERC-20
         if is_erc20:
             if not EXPECTED_TOKEN:
                 return {"valid": False, "error": "EXPECTED_TOKEN_ADDRESS no configurado para validación ERC-20."}
@@ -56,12 +52,10 @@ def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is
                 if not topics or not isinstance(topics, list):
                     continue
 
-                # topics[0] debe ser la signature del evento Transfer
                 topic0 = topics[0]
                 if not isinstance(topic0, str) or topic0.lower() != TRANSFER_EVENT_SIGNATURE_HASH:
                     continue
 
-                # topics[2] es el address destino (padded)
                 if len(topics) < 3:
                     continue
                 to_topic = topics[2]
@@ -72,7 +66,6 @@ def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is
                 if recipient_address.lower() != TARGET_WALLET:
                     continue
 
-                # data contiene el monto (hex)
                 data = log.get("data", "0x0")
                 raw_amount = int(data, 16) if isinstance(data, str) else int.from_bytes(data, "big")
                 decimals = EXPECTED_TOKEN_DECIMALS
@@ -93,8 +86,6 @@ def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is
                 "amount": transferred_amount,
                 "block_number": receipt.get("blockNumber"),
             }
-
-        # Nativo
         else:
             tx = w3.eth.get_transaction(tx_hash)
             if not tx:
