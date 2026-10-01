@@ -1,39 +1,31 @@
-# Python
+# Python cache and env
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environments
+# Coverage
+.coverage
+coverage.xml
+
+# Virtual envs
 .venv/
 env/
 venv/
 
-# Environment files
+# Env files
 .env
 .env.*
 
-# IDE/editor files
+# Editor
 .vscode/
 .idea/
-*.sublime-project
-*.sublime-workspace
 
-# OS files
+# OS
 .DS_Store
-Thumbs.db
 
-# Logs and databases
+# Logs
 *.log
-*.sqlite3
 
-# Build / packaging
+# Build
 dist/
 build/
-.eggs/
-*.egg-info/
-
-# Secrets and keys
-secrets/
-
-# Optional npm
-node_modules/
