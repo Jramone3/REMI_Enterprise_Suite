@@ -1,12 +1,12 @@
 import os
 import pytest
+from web3.exceptions import TransactionNotFound
 
-# Establecer defaults seguros *antes* de importar el módulo para evitar fallos por variables vacías en import time.
+# Defaults seguros antes de importar
 os.environ.setdefault("MIN_CONFIRMATIONS", "3")
 os.environ.setdefault("REMI_PAYMENT_ADDRESS", "0x0000000000000000000000000000000000000000")
 
 from remi_tx_validator import verify_base_transaction, TRANSFER_EVENT_SIGNATURE_HASH
-from eth_utils import to_checksum_address
 
 class DummyReceipt(dict):
     pass
@@ -67,7 +67,7 @@ def test_confirmations_insufficient(monkeypatch):
             return r
         @property
         def block_number(self):
-            return 105  # Confirmaciones = (105 - 104) + 1 = 2 (< MIN_CONFIRMATIONS=3)
+            return 105
 
     def fake_web3_factory(*args, **kwargs):
         return FakeW3()
@@ -81,10 +81,54 @@ def test_confirmations_insufficient(monkeypatch):
     assert res["valid"] is False
     assert "Confirmaciones insuficientes" in res["error"]
 
+def test_tx_receipt_not_found(monkeypatch):
+    tx_hash = "0xnotfound"
+    target_addr = "0x96De980a766CCb10A19B6962587e2b61B650b372"
+
+    class FakeW3(FakeW3Base):
+        def __init__(self, *args, **kwargs):
+            self.eth = self
+        def get_transaction_receipt(self, h):
+            raise TransactionNotFound("Not found")
+
+    def fake_web3_factory(*args, **kwargs):
+        return FakeW3()
+    fake_web3_factory.HTTPProvider = lambda *a, **kw: None
+
+    monkeypatch.setenv("REMI_PAYMENT_ADDRESS", target_addr)
+    monkeypatch.setattr("remi_tx_validator.Web3", fake_web3_factory)
+
+    res = verify_base_transaction(tx_hash, expected_min_amount=0.5)
+    assert res["valid"] is False
+    assert "no existe" in res["error"]
+
+def test_tx_status_failed(monkeypatch):
+    tx_hash = "0xfailed"
+    target_addr = "0x96De980a766CCb10A19B6962587e2b61B650b372"
+
+    class FakeW3(FakeW3Base):
+        def __init__(self, *args, **kwargs):
+            self.eth = self
+        def get_transaction_receipt(self, h):
+            r = DummyReceipt()
+            r["status"] = 0  # Fallida
+            return r
+
+    def fake_web3_factory(*args, **kwargs):
+        return FakeW3()
+    fake_web3_factory.HTTPProvider = lambda *a, **kw: None
+
+    monkeypatch.setenv("REMI_PAYMENT_ADDRESS", target_addr)
+    monkeypatch.setattr("remi_tx_validator.Web3", fake_web3_factory)
+
+    res = verify_base_transaction(tx_hash, expected_min_amount=0.5)
+    assert res["valid"] is False
+    assert "falló o fue revertida" in res["error"]
+
 def test_erc20_tx_valid(monkeypatch):
     tx_hash = "0xdeadbeef"
     target_addr = "0x96De980a766CCb10A19B6962587e2b61B650b372"
-    token_addr = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"  # USDC Base
+    token_addr = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
 
     target_topic = "0x" + "0" * 24 + target_addr[2:].lower()
     raw_amount_hex = hex(int(499 * 10**6))
