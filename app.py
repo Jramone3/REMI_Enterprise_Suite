@@ -141,9 +141,7 @@ with st.sidebar:
 # ==========================================
 # INTERFAZ PRINCIPAL DE CHAT (NÚCLEO LOCAL)
 # ==========================================
-st.info(
-    "Bienvenido a la vitrina interactiva de REMI. Escribe una consulta para interactuar en tiempo real con el núcleo local."
-)
+st.info("Bienvenido a la vitrina interactiva de REMI. Interactúa en tiempo real con el núcleo local.")
 
 # Inicializar historial de chat
 if "messages" not in st.session_state:
@@ -181,10 +179,10 @@ if prompt := st.chat_input("Escribe una consulta o instrucción para REMI:"):
                 if response.status_code == 200:
                     respuesta_ia = response.json()["message"]["content"]
                 else:
-                    respuesta_ia = f"**REMI (Núcleo):** Error al conectar con IA (Código {response.status_code})."
+                    respuesta_ia = f"**REMI:** Error (Código {response.status_code})."
+
             except Exception:
                 respuesta_ia = "**REMI (Núcleo):** Error de comunicación con el clúster local."
-
             st.markdown(respuesta_ia)
             st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
 
