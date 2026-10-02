@@ -12,6 +12,7 @@ EXPECTED_TOKEN_DECIMALS = int(os.getenv("EXPECTED_TOKEN_DECIMALS", "6"))
 
 TRANSFER_EVENT_SIGNATURE_HASH = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
+
 def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is_erc20: bool = False) -> dict:
     try:
         if not tx_hash or not isinstance(tx_hash, str):
@@ -69,15 +70,21 @@ def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is
                 data = log.get("data", "0x0")
                 raw_amount = int(data, 16) if isinstance(data, str) else int.from_bytes(data, "big")
                 decimals = EXPECTED_TOKEN_DECIMALS
-                transferred_amount = raw_amount / (10 ** decimals)
+                transferred_amount = raw_amount / (10**decimals)
                 transfer_found = True
                 break
 
             if not transfer_found:
-                return {"valid": False, "error": "No se encontró transferencia ERC-20 hacia la wallet objetivo en la tx."}
+                return {
+                    "valid": False,
+                    "error": "No se encontró transferencia ERC-20 hacia la wallet objetivo en la tx.",
+                }
 
             if transferred_amount < expected_min_amount:
-                return {"valid": False, "error": f"Monto ERC-20 insuficiente ({transferred_amount} < {expected_min_amount})."}
+                return {
+                    "valid": False,
+                    "error": f"Monto ERC-20 insuficiente ({transferred_amount} < {expected_min_amount}).",
+                }
 
             return {
                 "valid": True,
@@ -98,7 +105,10 @@ def verify_base_transaction(tx_hash: str, expected_min_amount: float = 0.001, is
             value_wei = tx.get("value", 0)
             value_eth = float(w3.from_wei(value_wei, "ether"))
             if value_eth < expected_min_amount:
-                return {"valid": False, "error": f"El monto transferido ({value_eth} ETH) es inferior al mínimo requerido."}
+                return {
+                    "valid": False,
+                    "error": f"El monto transferido ({value_eth} ETH) es inferior al mínimo requerido.",
+                }
 
             return {
                 "valid": True,
