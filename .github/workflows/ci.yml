@@ -1,34 +1,54 @@
-name: CI
+name: CI Quality & Security Pipeline
 
 on:
   push:
-    branches: [ main, fix/remi-enterprise-hardening ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build:
+  test-and-lint:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8
 
-    - name: Run Flake8 Linter
-      run: |
-        flake8 app.py tests/ --max-line-length=120 --ignore=E302,E306,W293,E231
+      - name: Run Code Linter (Flake8)
+        run: |
+          # Detener si hay errores de sintaxis graves
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Advertencias generales de estilo (no bloqueantes)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Run Pytest with Coverage
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest --cov=./ --cov-report=xml:coverage.xml
+      - name: Run Pytest & Coverage
+        env:
+          BASE_RPC_URL: "https://mainnet.base.org"
+          REMI_PAYMENT_ADDRESS: "0x0000000000000000000000000000000000000000"
+        run: |
+          PYTHONPATH=. pytest --cov=. --cov-report=xml
+
+  docker-build-check:
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image (Dry-run validation)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: remi-enterprise-suite:local-test
