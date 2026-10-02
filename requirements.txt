@@ -6,9 +6,3 @@ requests==2.31.0
 python-dotenv==1.0.1
 pymongo==4.6.3
 web3==6.15.1
-gTTS==2.3.2
-pytest>=7.0.0
-pytest-cov>=4.0.0
-eth-typing>=3.0.0,<4.0.0
-flake8>=6.0.0
-mongomock>=4.0.0
