@@ -7,9 +7,7 @@ from datetime import datetime, timedelta
 from remi_tx_validator import verify_base_transaction
 
 st.set_page_config(
-    page_title="REMI Enterprise Suite - Demo & Licenciamiento",
-    page_icon="assets/remi_logo.png",
-    layout="centered"
+    page_title="REMI Enterprise Suite - Demo & Licenciamiento", page_icon="assets/remi_logo.png", layout="centered"
 )
 
 # Imagen oficial de REMI y título principal
@@ -20,7 +18,11 @@ st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
 st.markdown("---")
 
 # Helper: procesa verificación on-chain y emite licencia si aplica
-def issue_license_if_verified(cliente_email: str, tx_hash: str, *, is_erc20: bool = True, expected_token_min_amount: float = 499.0) -> dict:
+
+
+def issue_license_if_verified(
+    cliente_email: str, tx_hash: str, *, is_erc20: bool = True, expected_token_min_amount: float = 499.0
+) -> dict:
     """
     Verifica la transacción on-chain y, si es válida, genera una licencia anual.
 
@@ -37,15 +39,23 @@ def issue_license_if_verified(cliente_email: str, tx_hash: str, *, is_erc20: boo
     try:
         # Para ERC-20 esperamos 499 USDT por defecto
         if is_erc20:
-            verification = verify_base_transaction(tx_hash, expected_min_amount=expected_token_min_amount, is_erc20=True)
+            verification = verify_base_transaction(
+                tx_hash, expected_min_amount=expected_token_min_amount, is_erc20=True
+            )
         else:
-            verification = verify_base_transaction(tx_hash, expected_min_amount=expected_token_min_amount, is_erc20=False)
+            verification = verify_base_transaction(
+                tx_hash, expected_min_amount=expected_token_min_amount, is_erc20=False
+            )
 
     except Exception as e:
         return {"valid": False, "message": f"Error al verificar la transacción: {str(e)}"}
 
     if not verification.get("valid"):
-        return {"valid": False, "message": f"Verificación fallida: {verification.get('error')}", "details": verification}
+        return {
+            "valid": False,
+            "message": f"Verificación fallida: {verification.get('error')}",
+            "details": verification,
+        }
 
     # Si la verificación es exitosa, generar la licencia
     fecha_expiracion = datetime.now() + timedelta(days=365)
@@ -53,15 +63,17 @@ def issue_license_if_verified(cliente_email: str, tx_hash: str, *, is_erc20: boo
     hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
     licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
 
-    # Puedes agregar aquí persistencia (DB) para el registro de la licencia emitida
+    # Puedes agregar aquí persistencia (DB) para el registro de la licencia
+    # emitida
 
     return {
         "valid": True,
         "message": "Licencia emitida con éxito.",
         "license": licencia_final,
-        "expires": fecha_expiracion.strftime('%Y-%m-%d'),
+        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
         "details": verification,
     }
+
 
 # ==========================================
 # BARRA LATERAL: PASARELA Y LICENCIAMIENTO
@@ -70,12 +82,14 @@ with st.sidebar:
     st.image("assets/remi_imagen_oficial.jpeg", width=100)
     st.subheader("Portal Enterprise")
     st.caption("Infraestructura respaldada por Standard EOA-Contract via Base Network / Búnker Local.")
-    
+
     st.markdown("---")
     st.markdown("### 💎 Adquirir Licencia Anual")
     st.markdown("**Costo:** $499 USD / Año")
-    st.markdown("Incluye soporte técnico, actualizaciones directas del clúster multi-agente y módulos avanzados de auditoría.")
-    
+    st.markdown(
+        "Incluye soporte técnico, actualizaciones directas del clúster multi-agente y módulos avanzados de auditoría."
+    )
+
     if st.button("Generar Datos de Pago"):
         st.session_state.mostrar_pago = True
 
@@ -86,7 +100,7 @@ with st.sidebar:
             f"`{os.getenv('REMI_PAYMENT_ADDRESS', '0x96De980a766CCb10A19B6962587e2b61B650b372')}`\n\n"
             "2. Registra tus datos y el **TxID** de la transferencia para emitir tu llave anual."
         )
-        
+
         # Formulario de registro y validación del cliente
         cliente_email = st.text_input("Correo electrónico de registro:")
         tx_input = st.text_input("Hash de la Transacción (TxID):")
@@ -95,15 +109,20 @@ with st.sidebar:
         if st.button("Verificar y Activar Licencia Anual"):
             if cliente_email and tx_input:
                 is_erc20 = token_type.startswith("USDT")
-                # Llamar helper para verificar y (si corresponde) emitir la licencia
-                result = issue_license_if_verified(cliente_email, tx_input, is_erc20=is_erc20, expected_token_min_amount=499.0)
+                # Llamar helper para verificar y (si corresponde) emitir la
+                # licencia
+                result = issue_license_if_verified(
+                    cliente_email, tx_input, is_erc20=is_erc20, expected_token_min_amount=499.0
+                )
 
                 if result.get("valid"):
                     st.success("¡Pago verificado! Licencia Enterprise emitida exitosamente.")
                     st.markdown(f"**Cliente Registrado:** {cliente_email}")
                     st.markdown(f"**Válida hasta:** {result.get('expires')}")
                     st.code(result.get("license"), language="text")
-                    st.caption("Guarda esta llave en tu servidor local para recibir actualizaciones directas del sistema.")
+                    st.caption(
+                        "Guarda esta llave en tu servidor local para recibir actualizaciones directas del sistema."
+                    )
                 else:
                     st.error(f"No se pudo emitir la licencia: {result.get('message')}")
             else:
@@ -122,7 +141,7 @@ with st.sidebar:
 # ==========================================
 # INTERFAZ PRINCIPAL DE CHAT (NÚCLEO LOCAL)
 # ==========================================
-st.info("Bienvenido a la vitrina interactiva de REMI. Escribe una consulta para interactuar en tiempo real con el núcleo local.")
+st.info("Bienvenido a la vitrina interactiva de REMI. Interactúa en tiempo real con el núcleo local.")
 
 # Inicializar historial de chat
 if "messages" not in st.session_state:
@@ -152,21 +171,18 @@ if prompt := st.chat_input("Escribe una consulta o instrucción para REMI:"):
                 url = "http://localhost:11434/api/chat"
                 payload = {
                     "model": "llama3",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "stream": False
+                    "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
+                    "stream": False,
                 }
-                
+
                 response = requests.post(url, json=payload)
                 if response.status_code == 200:
                     respuesta_ia = response.json()["message"]["content"]
                 else:
-                    respuesta_ia = f"**REMI (Núcleo Activo):** Error al conectar con el servidor local de IA (Código {response.status_code})."
-            except Exception:
-                respuesta_ia = f"**REMI (Núcleo Activo):** No se pudo establecer comunicación con el clúster local. Asegúrate de que el servicio esté activo."
+                    respuesta_ia = f"**REMI:** Error (Código {response.status_code})."
 
+            except Exception:
+                respuesta_ia = "**REMI (Núcleo):** Error de comunicación con el clúster local."
             st.markdown(respuesta_ia)
             st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
 
