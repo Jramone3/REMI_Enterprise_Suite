@@ -14,3 +14,5 @@ pytest-cov>=4.0.0
 eth-typing>=3.0.0,<4.0.0
 
 flake8>=6.0.0
+
+mongomock>=4.0.0
