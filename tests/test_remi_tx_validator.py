@@ -1,5 +1,10 @@
 import os
 import pytest
+
+# Establecer defaults seguros *antes* de importar el módulo para evitar fallos por variables vacías en import time.
+os.environ.setdefault("MIN_CONFIRMATIONS", "3")
+os.environ.setdefault("REMI_PAYMENT_ADDRESS", "0x0000000000000000000000000000000000000000")
+
 from remi_tx_validator import verify_base_transaction, TRANSFER_EVENT_SIGNATURE_HASH
 from eth_utils import to_checksum_address
 
@@ -38,9 +43,9 @@ def test_native_tx_valid(monkeypatch):
         return FakeW3()
     fake_web3_factory.HTTPProvider = lambda *a, **kw: None
 
+    monkeypatch.setenv("REMI_PAYMENT_ADDRESS", target_addr)
+    monkeypatch.setenv("MIN_CONFIRMATIONS", "3")
     monkeypatch.setattr("remi_tx_validator.Web3", fake_web3_factory)
-    os.environ["REMI_PAYMENT_ADDRESS"] = target_addr
-    os.environ["MIN_CONFIRMATIONS"] = "3"
 
     res = verify_base_transaction(tx_hash, expected_min_amount=0.5, is_erc20=False)
     assert res["valid"] is True
@@ -68,9 +73,9 @@ def test_confirmations_insufficient(monkeypatch):
         return FakeW3()
     fake_web3_factory.HTTPProvider = lambda *a, **kw: None
 
+    monkeypatch.setenv("REMI_PAYMENT_ADDRESS", target_addr)
+    monkeypatch.setenv("MIN_CONFIRMATIONS", "3")
     monkeypatch.setattr("remi_tx_validator.Web3", fake_web3_factory)
-    os.environ["REMI_PAYMENT_ADDRESS"] = target_addr
-    os.environ["MIN_CONFIRMATIONS"] = "3"
 
     res = verify_base_transaction(tx_hash, expected_min_amount=0.5, is_erc20=False)
     assert res["valid"] is False
@@ -79,11 +84,9 @@ def test_confirmations_insufficient(monkeypatch):
 def test_erc20_tx_valid(monkeypatch):
     tx_hash = "0xdeadbeef"
     target_addr = "0x96De980a766CCb10A19B6962587e2b61B650b372"
-    token_addr = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" # USDC Base
+    token_addr = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"  # USDC Base
 
-    # Formatear topic destino (padding a 32 bytes)
     target_topic = "0x" + "0" * 24 + target_addr[2:].lower()
-    # 499 USDC con 6 decimales = 499000000 -> hex
     raw_amount_hex = hex(int(499 * 10**6))
 
     class FakeW3(FakeW3Base):
@@ -95,13 +98,13 @@ def test_erc20_tx_valid(monkeypatch):
             r["blockNumber"] = 100
             r["logs"] = [
                 {
-                    "address": token_addr,
+                    "address": token_addr.lower(),
                     "topics": [
                         TRANSFER_EVENT_SIGNATURE_HASH,
-                        "0x" + "0" * 64, # from
-                        target_topic    # to
+                        "0x" + "0" * 64,
+                        target_topic,
                     ],
-                    "data": raw_amount_hex
+                    "data": raw_amount_hex,
                 }
             ]
             return r
@@ -113,11 +116,11 @@ def test_erc20_tx_valid(monkeypatch):
         return FakeW3()
     fake_web3_factory.HTTPProvider = lambda *a, **kw: None
 
+    monkeypatch.setenv("REMI_PAYMENT_ADDRESS", target_addr)
+    monkeypatch.setenv("EXPECTED_TOKEN_ADDRESS", token_addr)
+    monkeypatch.setenv("EXPECTED_TOKEN_DECIMALS", "6")
+    monkeypatch.setenv("MIN_CONFIRMATIONS", "3")
     monkeypatch.setattr("remi_tx_validator.Web3", fake_web3_factory)
-    os.environ["REMI_PAYMENT_ADDRESS"] = target_addr
-    os.environ["EXPECTED_TOKEN_ADDRESS"] = token_addr
-    os.environ["EXPECTED_TOKEN_DECIMALS"] = "6"
-    os.environ["MIN_CONFIRMATIONS"] = "3"
 
     res = verify_base_transaction(tx_hash, expected_min_amount=499.0, is_erc20=True)
     assert res["valid"] is True
