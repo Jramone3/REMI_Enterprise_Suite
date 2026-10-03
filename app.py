@@ -52,9 +52,78 @@ def issue_license_if_verified(
     hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
     licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
 
+    # --- INICIO DE PERSISTENCIA AUTOMÁTICA EN MONGODB ---
+    from db import save_license
+
+    license_record = {
+        "email": cliente_email,
+        "tx_hash": tx_hash,
+        "license": licencia_final,
+        "issued_at": datetime.utcnow().isoformat(),
+        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
+        "type": "ANNUAL",
+        "amount": expected_token_min_amount,
+        "status": "ACTIVE",
+        "verification": verification,
+    }
+
+    db_result = save_license(license_record)
+    if not db_result.get("ok"):
+        if "already exists" in db_result.get("error", ""):
+            return {
+                "valid": False,
+                "message": "Esta transacción ya fue utilizada para emitir otra licencia.",
+            }
+        return {
+            "valid": False,
+            "message": f"Error al persistir: {db_result.get('error')}",
+        }
+    # --- FIN DE PERSISTENCIA AUTOMÁTICA ---
+
     return {
         "valid": True,
-        "message": "Licencia emitida con éxito.",
+        "message": "Licencia emitida y guardada con éxito.",
+        "license": licencia_final,
+        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
+        "details": verification,
+    }
+
+    fecha_expiracion = datetime.now() + timedelta(days=365)
+    raw_key = f"{cliente_email}-{tx_hash}-REMI-2026"
+    hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
+    licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
+
+    # --- INICIO DE PERSISTENCIA AUTOMÁTICA ---
+    from db import save_license
+
+    license_record = {
+        "email": cliente_email,
+        "tx_hash": tx_hash,
+        "license": licencia_final,
+        "issued_at": datetime.utcnow().isoformat(),
+        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
+        "type": "ANNUAL",
+        "amount": expected_token_min_amount,
+        "status": "ACTIVE",
+        "verification": verification,
+    }
+
+    db_result = save_license(license_record)
+    if not db_result.get("ok"):
+        if "already exists" in db_result.get("error", ""):
+            return {
+                "valid": False,
+                "message": "Esta transacción ya fue utilizada para emitir otra licencia.",
+            }
+        return {
+            "valid": False,
+            "message": f"Error al persistir la licencia: {db_result.get('error')}",
+        }
+    # --- FIN DE PERSISTENCIA AUTOMÁTICA ---
+
+    return {
+        "valid": True,
+        "message": "Licencia emitida y guardada con éxito.",
         "license": licencia_final,
         "expires": fecha_expiracion.strftime("%Y-%m-%d"),
         "details": verification,
@@ -91,6 +160,15 @@ with st.sidebar:
     st.image("assets/remi_imagen_oficial.jpeg", width=100)
     st.subheader("Portal Enterprise")
     st.caption("Infraestructura respaldada por Standard EOA-Contract via Base Network / Búnker Local.")
+
+    # Verificación de Estado DB en tiempo real
+    try:
+        from db import get_client
+        db_client = get_client()
+        db_client.admin.command('ping')
+        st.success("🟢 Búnker DB: Conectado (MongoDB)")
+    except Exception:
+        st.error("🔴 Búnker DB: Desconectado")
 
     st.markdown("---")
     st.markdown("### 💎 Adquirir Licencia Anual")
@@ -133,13 +211,32 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 🔄 Verificación de Actualizaciones")
-    email_check = st.text_input("Correo registrado:")
-    key_check = st.text_input("Clave de Licencia:")
+    email_check = st.text_input("Correo registrado:", key="check_email")
+    key_check = st.text_input("Clave de Licencia:", type="password", key="check_key")
+    
     if st.button("Comprobar Actualizaciones"):
         if email_check and key_check:
-            st.success("Licencia activa. Clúster sincronizado con el último parche de seguridad del repositorio.")
+            from db import find_license_by_email
+            record = find_license_by_email(email_check)
+            if record and record.get("license") == key_check:
+                st.success("✅ Licencia activa y verificada en el búnker. Clúster sincronizado con el último parche.")
+                st.info(f"Válida hasta: {record.get('expires')}")
+            else:
+                st.error("❌ Licencia inválida o no encontrada en los registros del clúster.")
         else:
             st.warning("Introduce tus credenciales registradas.")
+
+    with st.expander("📊 Auditoría Rápida de Licencias"):
+        if st.button("Ver Registros en DB"):
+            try:
+                client = get_client()
+                licenses = list(client["remi_enterprise"]["licenses"].find({}, {"_id": 0, "email": 1, "license": 1, "expires": 1}))
+                if licenses:
+                    st.write(licenses)
+                else:
+                    st.info("No hay licencias emitidas todavía.")
+            except Exception as e:
+                st.error(f"Error al leer la base de datos: {e}")
 
     st.markdown("---")
     st.markdown("### 🐙 Automatización GitHub")
