@@ -47,4 +47,4 @@ jobs:
 
     - name: Run Tests with Pytest
       run: |
-        pytest -v --cov=.
+        pytest -v -c /dev/null --cov=.
