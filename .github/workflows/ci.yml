@@ -47,4 +47,4 @@ jobs:
 
     - name: Run Tests with Pytest
       run: |
-        pytest -v --cov=remi_tx_validator
+        pytest -v -o python_files=test_*.py --cov=.
