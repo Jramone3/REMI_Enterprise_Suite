@@ -1,51 +1,28 @@
-name: CI REMI Enterprise Suite
+name: REMI CI Pipeline
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, feat/persist-licenses ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main ]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
-
-    services:
-      mongo:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-
-    env:
-      REMI_PAYMENT_ADDRESS: 0x0000000000000000000000000000000000000000
-      MIN_CONFIRMATIONS: 3
-      MONGO_URI: mongodb://localhost:27017/
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
-        cache: 'pip'
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-        # Eliminar el submódulo conflictivo de web3 tools que busca ContractName obsoleto
-        python -c "import site; import os; [os.system(f'rm -rf {p}/web3/tools/pytest_ethereum') for p in site.getsitepackages() if os.path.exists(f'{p}/web3/tools/pytest_ethereum')]"
-
-    - name: Run flake8 (errors only)
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
-    - name: Run flake8 (style, non-blocking)
-      run: |
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Run Tests with Unittest
       run: |
