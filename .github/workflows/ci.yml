@@ -47,4 +47,4 @@ jobs:
 
     - name: Run Tests with Pytest
       run: |
-        pytest -v -p no:pytest_ethereum --cov=. test_db.py
+        pytest -v --cov=.
