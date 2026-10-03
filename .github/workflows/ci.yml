@@ -36,6 +36,8 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        # Eliminar el submódulo conflictivo de web3 tools que busca ContractName obsoleto
+        python -c "import site; import os; [os.system(f'rm -rf {p}/web3/tools/pytest_ethereum') for p in site.getsitepackages() if os.path.exists(f'{p}/web3/tools/pytest_ethereum')]"
 
     - name: Run flake8 (errors only)
       run: |
