@@ -47,6 +47,6 @@ jobs:
       run: |
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Run Tests with Pytest
+    - name: Run Tests with Unittest
       run: |
-        pytest -v -c /dev/null --cov=.
+        python -m unittest discover -s . -p "test_*.py"
