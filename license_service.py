@@ -1,91 +1,78 @@
-from datetime import datetime, timedelta
-import hashlib
-import os
-from fastapi import FastAPI, HTTPException, status
+# license_service.py - Microservicio FastAPI seguro para gestión de licencias
+from fastapi import FastAPI, HTTPException, Security, Depends
+from fastapi.security.api_key import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from db import save_license, find_license_by_email
-from remi_tx_validator import verify_base_transaction
+import os
 
-app = FastAPI(
-    title="REMI Enterprise License Service",
-    description="Microservicio FastAPI para la gestión y verificación on-chain de licencias corporativas.",
-    version="1.0.0"
+from db import init_db, save_license, find_license_by_email
+from remi_tx_validator import validate_transaction
+
+app = FastAPI(title="REMI License Microservice", version="2.0.0")
+
+# CORS config
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+API_KEY_NAME = "X-API-Key"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+REMI_API_KEY = os.getenv("REMI_API_KEY", "remi_secret_dev_key_2026")
+
+def get_api_key(api_key: str = Security(api_key_header)):
+    if api_key == REMI_API_KEY:
+        return api_key
+    raise HTTPException(status_code=403, detail="Credenciales de API Key inválidas o ausentes")
+
+@app.on_event("startup")
+async def startup_event():
+    """Inicializa la base de datos y los índices únicos al arrancar."""
+    init_db()
 
 class LicenseRequest(BaseModel):
     email: EmailStr
     tx_hash: str
-    is_erc20: bool = True
-    expected_amount: float = 499.0
+    tier: str = "enterprise"
 
-@app.get("/health", tags=["Health"])
-def health_check():
-    return {"status": "online", "service": "remi-license-service", "timestamp": datetime.utcnow().isoformat()}
+@app.post("/licenses/issue")
+def issue_license(payload: LicenseRequest, api_key: str = Depends(get_api_key)):
+    """Emite una nueva licencia tras validar la transacción on-chain (Protegido por API Key)."""
+    # 1. Validar transacción on-chain
+    validation = validate_transaction(payload.tx_hash)
+    if not validation.get("valid"):
+        raise HTTPException(status_code=400, detail=f"Transacción inválida: {validation.get('error', 'Desconocido')}")
 
-@app.post("/licenses/issue", tags=["Licenses"])
-def issue_license(payload: LicenseRequest):
-    """Verifica la transacción on-chain y emite una licencia anual si el pago es válido."""
-    if not payload.email or not payload.tx_hash:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email y tx_hash son obligatorios.")
-
-    try:
-        verification = verify_base_transaction(
-            payload.tx_hash,
-            expected_min_amount=payload.expected_amount,
-            is_erc20=payload.is_erc20
-        )
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error validando la transacción: {str(e)}")
-
-    if not verification.get("valid"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Verificación fallida: {verification.get('error')}"
-        )
-
-    fecha_expiracion = datetime.now() + timedelta(days=365)
-    raw_key = f"{payload.email}-{payload.tx_hash}-REMI-2026"
-    hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
-    licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
-
-    license_record = {
+    # 2. Guardar licencia en DB
+    license_data = {
         "email": payload.email,
         "tx_hash": payload.tx_hash,
-        "license": licencia_final,
-        "issued_at": datetime.utcnow().isoformat(),
-        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
-        "type": "ANNUAL",
-        "amount": payload.expected_amount,
-        "status": "ACTIVE",
-        "verification": verification,
+        "tier": payload.tier,
+        "status": "active"
     }
+    
+    result = save_license(license_data)
+    if not result.get("ok"):
+        if "duplicate" in str(result.get("error", "")).lower():
+            raise HTTPException(status_code=409, detail="La transacción ya fue utilizada para emitir una licencia.")
+        raise HTTPException(status_code=500, detail=result.get("error", "Error interno de base de datos"))
 
-    db_result = save_license(license_record)
-    if not db_result.get("ok"):
-        if "already exists" in db_result.get("error", ""):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Esta transacción ya fue utilizada para emitir otra licencia."
-            )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al persistir en base de datos: {db_result.get('error')}"
-        )
+    return {"status": "success", "message": "Licencia emitida correctamente", "id": result.get("inserted_id")}
 
-    return {
-        "success": True,
-        "message": "Licencia emitida y guardada con éxito.",
-        "license": licencia_final,
-        "expires": fecha_expiracion.strftime("%Y-%m-%d")
-    }
-
-@app.get("/licenses/verify/{email}", tags=["Licenses"])
+@app.get("/licenses/verify/{email}")
 def verify_license(email: str):
-    """Consulta el estado de la licencia asociada a un correo electrónico."""
+    """Verifica una licencia de forma pública sin exponer datos sensibles ni hashes de transacciones."""
     record = find_license_by_email(email)
     if not record:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontró licencia para este correo.")
+        raise HTTPException(status_code=404, detail="Licencia no encontrada")
     
-    # Ocultar ID interno de Mongo en la respuesta pública
-    record.pop("_id", None)
-    return {"status": "found", "license_data": record}
+    # Excluir explícitamente tx_hash u otros datos internos por seguridad
+    safe_response = {
+        "email": record.get("email"),
+        "tier": record.get("tier"),
+        "status": record.get("status", "active")
+    }
+    return {"status": "valid", "license": safe_response}
