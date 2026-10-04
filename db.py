@@ -1,32 +1,38 @@
-# db.py - Conexión y gestión de MongoDB optimizada
+# db.py
 import os
 from pymongo import MongoClient
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "remi_licenses")
 
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-licenses_collection = db["licenses"]
+def get_client():
+    return MongoClient(MONGO_URI)
 
 def init_db():
-    """Inicializa índices de MongoDB una sola vez al arrancar la app."""
+    """Inicializa la base de datos y crea los índices únicos necesarios en el arranque."""
+    client = get_client()
+    db = client["remi_enterprise"]
+    # Crear índices únicos explícitamente en el arranque
+    db["licenses"].create_index("tx_hash", unique=True)
+    db["licenses"].create_index("email", unique=True)
+    client.close()
+
+def save_license(license_data: dict) -> dict:
+    client = get_client()
+    db = client["remi_enterprise"]
     try:
-        licenses_collection.create_index("tx_hash", unique=True)
-        licenses_collection.create_index("email", unique=True)
-        print("[DB] Índices de MongoDB inicializados correctamente.")
+        db["licenses"].insert_one(license_data)
+        return {"ok": True}
     except Exception as e:
-        print(f"[DB] Error al inicializar índices: {e}")
+        if "duplicate key error" in str(e):
+            return {"ok": False, "error": "already exists"}
+        return {"ok": False, "error": str(e)}
+    finally:
+        client.close()
 
-def save_license(license_data: dict):
-    """Guarda una licencia sin sobrecargar con creación repetitiva de índices."""
-    return licenses_collection.insert_one(license_data)
-
-def get_license_by_email(email: str):
+def find_license_by_email(email: str):
+    client = get_client()
+    db = client["remi_enterprise"]
     try:
-        return licenses_collection.find_one({"email": email})
-    except Exception:
-        return None
-
-# Alias por compatibilidad con tests antiguos si lo requieren
-find_license_by_email = get_license_by_email
+        return db["licenses"].find_one({"email": email}, {"_id": 0})
+    finally:
+        client.close()
