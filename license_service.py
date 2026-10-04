@@ -26,8 +26,14 @@ class LicenseRequest(BaseModel):
     tier: str = "standard"  # standard o enterprise
 
 # Dependencia de seguridad: Validación de API Key del Administrador
+# Dependencia de seguridad: Validación estricta de API Key del Administrador
 def verify_api_key(x_api_key: str = Header(..., description="API Key de Administrador de REMI")):
-    expected_key = os.getenv("REMI_API_KEY", "remi_secret_admin_key_2026")
+    expected_key = os.getenv("REMI_API_KEY")
+    if not expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error crítico de seguridad: REMI_API_KEY no está configurada en el servidor."
+        )
     if x_api_key != expected_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
