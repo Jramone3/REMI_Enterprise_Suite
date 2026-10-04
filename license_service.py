@@ -3,7 +3,8 @@ import os
 from datetime import datetime, timedelta
 import hashlib
 from fastapi import FastAPI, HTTPException, Depends, Header, status
-from pydantic import BaseModel
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, Field
 from db import init_db, save_license, find_license_by_email
 from remi_tx_validator import validate_transaction
 
@@ -17,7 +18,7 @@ app = FastAPI(
 @app.on_event("startup")
 def startup_event():
     init_db()
-    print("[INFO] Búnker DB inicializado y restricciones de índices únicos aplicadas.")
+    print("[INFO] Búnker DB inicializado y restricciones de índices únicas aplicadas.")
 
 # Esquema de datos para emitir licencias
 class LicenseRequest(BaseModel):
@@ -25,10 +26,10 @@ class LicenseRequest(BaseModel):
     tx_hash: str
     tier: str = "standard"  # standard o enterprise
 
-# Esquema para la creación de issues en GitHub
+# Esquema para la creación de issues en GitHub con validación de tamaño
 class IssueRequest(BaseModel):
-    title: str
-    body: str = "Generado automáticamente por REMI Core OS"
+    title: str = Field(..., min_length=3, max_length=150)
+    body: str = Field(default="Generado automáticamente por REMI Core OS", max_length=2000)
 
 # Dependencia de seguridad: Validación estricta de API Key del Administrador
 def verify_api_key(x_api_key: str = Header(..., description="API Key de Administrador de REMI")):
@@ -121,28 +122,37 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
         "expires": fecha_expiracion.strftime("%Y-%m-%d")
     }
 
-# Endpoint protegido: Creación de issues en GitHub desde el backend
+# Endpoint protegido y optimizado: Creación segura de issues en GitHub vía threadpool
 @app.post("/github/create-issue", tags=["GitHub Automation"])
 async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify_api_key)):
-    """Crea un issue en GitHub de forma segura desde el backend utilizando el token del servidor."""
+    """Crea un issue en GitHub de forma segura y no bloqueante utilizando el token del servidor."""
     token = os.getenv("GITHUB_BOT_TOKEN")
     if not token:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="GITHUB_BOT_TOKEN no está configurado en el servidor."
         )
-    try:
-        from github import Github
+    
+    def _create_issue_sync():
+        from github import Github, GithubException
+        # Inicialización segura con repositorio configurable
         g = Github(token)
-        repo = g.get_repo("Jramone3/REMI_Enterprise_Suite")
-        github_issue = repo.create_issue(title=issue.title, body=issue.body)
+        repo_name = os.getenv("GITHUB_REPO", "Jramone3/REMI_Enterprise_Suite")
+        repo = g.get_repo(repo_name)
+        return repo.create_issue(title=issue.title, body=issue.body)
+
+    try:
+        # Ejecución en threadpool para evitar bloquear el event loop de FastAPI
+        github_issue = await run_in_threadpool(_create_issue_sync)
         return {
             "success": True,
             "issue_number": github_issue.number,
             "issue_url": github_issue.html_url
         }
-    except Exception as e:
+    except Exception as ge:
+        # Registro interno seguro del error sin fugar trazas o secretos al cliente
+        print(f"[ERROR] Fallo en integración con GitHub API: {str(ge)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al conectar con GitHub API: {str(e)}"
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Error interno al comunicarse con la API de GitHub."
         )
