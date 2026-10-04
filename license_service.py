@@ -25,7 +25,11 @@ class LicenseRequest(BaseModel):
     tx_hash: str
     tier: str = "standard"  # standard o enterprise
 
-# Dependencia de seguridad: Validación de API Key del Administrador
+# Esquema para la creación de issues en GitHub
+class IssueRequest(BaseModel):
+    title: str
+    body: str = "Generado automáticamente por REMI Core OS"
+
 # Dependencia de seguridad: Validación estricta de API Key del Administrador
 def verify_api_key(x_api_key: str = Header(..., description="API Key de Administrador de REMI")):
     expected_key = os.getenv("REMI_API_KEY")
@@ -116,3 +120,29 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
         "license": licencia_final,
         "expires": fecha_expiracion.strftime("%Y-%m-%d")
     }
+
+# Endpoint protegido: Creación de issues en GitHub desde el backend
+@app.post("/github/create-issue", tags=["GitHub Automation"])
+async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify_api_key)):
+    """Crea un issue en GitHub de forma segura desde el backend utilizando el token del servidor."""
+    token = os.getenv("GITHUB_BOT_TOKEN")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="GITHUB_BOT_TOKEN no está configurado en el servidor."
+        )
+    try:
+        from github import Github
+        g = Github(token)
+        repo = g.get_repo("Jramone3/REMI_Enterprise_Suite")
+        github_issue = repo.create_issue(title=issue.title, body=issue.body)
+        return {
+            "success": True,
+            "issue_number": github_issue.number,
+            "issue_url": github_issue.html_url
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al conectar con GitHub API: {str(e)}"
+        )
