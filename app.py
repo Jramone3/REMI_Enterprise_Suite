@@ -1,28 +1,45 @@
 from datetime import datetime, timedelta
 import hashlib
 import os
-
+import sys
 from github import Github
 import requests
 import streamlit as st
 
 from remi_tx_validator import verify_base_transaction
 
+# Validación segura de assets para evitar errores de renderizado
+logo_path = "assets/remi_logo.png"
+favicon_arg = logo_path if os.path.exists(logo_path) else None
+
 st.set_page_config(
     page_title="REMI Enterprise Suite - Demo & Licenciamiento",
-    page_icon="assets/remi_logo.png",
+    page_icon=favicon_arg,
     layout="centered",
 )
 
-# Imagen oficial de REMI y título principal
-st.image("assets/remi_imagen_oficial.jpeg", width=200)
-st.title("REMI Enterprise Suite")
+# Validación de variables de entorno críticas
+CRITICAL_VARS = ["REMI_PAYMENT_ADDRESS", "BASE_RPC_URL"]
+missing_vars = [var for var in CRITICAL_VARS if not os.getenv(var)]
 
+if missing_vars:
+    print(f"[ERROR CRITICO] Faltan las siguientes variables de entorno obligatorias: {', '.join(missing_vars)}")
+    print("Por favor, configure su archivo .env antes de iniciar la aplicación.")
+    sys.exit(1)
+
+# Imagen oficial de REMI condicional y título principal
+img_path = "assets/remi_imagen_oficial.jpeg"
+if os.path.exists(img_path):
+    st.image(img_path, width=200)
+else:
+    st.markdown("### 🛡️ REMI Enterprise Core")
+
+st.title("REMI Enterprise Suite")
 st.markdown("### Framework Multi-Agente y Núcleo de Inteligencia Artificial")
 st.markdown("---")
 
 
-# Helper: procesa verificación on-chain y emite licencia si aplica
+# Helper: procesa verificación on-chain y emite licencia si aplica (Unificado y sin duplicados)
 def issue_license_if_verified(
     cliente_email: str, tx_hash: str, *, is_erc20: bool = True, expected_token_min_amount: float = 499.0
 ) -> dict:
@@ -53,47 +70,6 @@ def issue_license_if_verified(
     licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
 
     # --- INICIO DE PERSISTENCIA AUTOMÁTICA EN MONGODB ---
-    from db import save_license
-
-    license_record = {
-        "email": cliente_email,
-        "tx_hash": tx_hash,
-        "license": licencia_final,
-        "issued_at": datetime.utcnow().isoformat(),
-        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
-        "type": "ANNUAL",
-        "amount": expected_token_min_amount,
-        "status": "ACTIVE",
-        "verification": verification,
-    }
-
-    db_result = save_license(license_record)
-    if not db_result.get("ok"):
-        if "already exists" in db_result.get("error", ""):
-            return {
-                "valid": False,
-                "message": "Esta transacción ya fue utilizada para emitir otra licencia.",
-            }
-        return {
-            "valid": False,
-            "message": f"Error al persistir: {db_result.get('error')}",
-        }
-    # --- FIN DE PERSISTENCIA AUTOMÁTICA ---
-
-    return {
-        "valid": True,
-        "message": "Licencia emitida y guardada con éxito.",
-        "license": licencia_final,
-        "expires": fecha_expiracion.strftime("%Y-%m-%d"),
-        "details": verification,
-    }
-
-    fecha_expiracion = datetime.now() + timedelta(days=365)
-    raw_key = f"{cliente_email}-{tx_hash}-REMI-2026"
-    hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
-    licencia_final = f"REMI-ENT-ANNUAL-{hash_key}"
-
-    # --- INICIO DE PERSISTENCIA AUTOMÁTICA ---
     from db import save_license
 
     license_record = {
@@ -157,7 +133,9 @@ def trigger_github_action(payload: dict):
 # BARRA LATERAL: PASARELA Y LICENCIAMIENTO
 # ==========================================
 with st.sidebar:
-    st.image("assets/remi_imagen_oficial.jpeg", width=100)
+    if os.path.exists(img_path):
+        st.image(img_path, width=100)
+
     st.subheader("Portal Enterprise")
     st.caption("Infraestructura respaldada por Standard EOA-Contract via Base Network / Búnker Local.")
 
