@@ -1,9 +1,9 @@
-# license_service.py - Microservicio de Licenciamiento FastAPI (Edición 100/100)
+k# license_service.py - Microservicio de Licenciamiento FastAPI (Edición 100/100 con Stripe y Búnker DB)
 import os
 import logging
 from datetime import datetime, timedelta
 import hashlib
-from fastapi import FastAPI, HTTPException, Depends, Header, status
+from fastapi import FastAPI, Request, HTTPException, Depends, Header, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from db import init_db, save_license, find_license_by_email, save_audit_log
@@ -15,8 +15,8 @@ logger = logging.getLogger("remi_license_service")
 
 app = FastAPI(
     title="REMI License Microservice",
-    version="2.1.0",
-    description="Microservicio blindado de emisión, verificación de licencias y automatización para REMI Enterprise Suite"
+    version="2.2.0",
+    description="Microservicio blindado de emisión, verificación de licencias, pagos fiduciarios (Stripe) y automatización para REMI Enterprise Suite"
 )
 
 # Evento de inicio: inicializa la base de datos y crea índices únicos
@@ -25,13 +25,12 @@ def startup_event():
     init_db()
     logger.info("Búnker DB inicializado y restricciones de índices únicos aplicadas.")
 
-# Esquema de datos para emitir licencias
+# Esquemas de datos (Soporte Cripto y Stripe)
 class LicenseRequest(BaseModel):
     email: str
     tx_hash: str
     tier: str = "standard"  # standard o enterprise
 
-# Esquema para la creación de issues en GitHub con validación estricta
 class IssueRequest(BaseModel):
     title: str = Field(..., min_length=3, max_length=150)
     body: str = Field(default="Generado automáticamente por REMI Core OS", max_length=2000)
@@ -55,7 +54,7 @@ def verify_api_key(x_api_key: str = Header(..., description="API Key de Administ
 
 @app.get("/")
 def health_check():
-    return {"status": "online", "service": "REMI License Microservice"}
+    return {"status": "online", "service": "REMI License Microservice", "sovereignty": "sda5"}
 
 # Endpoint público blindado: Verifica licencia por correo ocultando datos sensibles
 @app.get("/licenses/verify/{email}")
@@ -128,10 +127,57 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
         "expires": fecha_expiracion.strftime("%Y-%m-%d")
     }
 
-# Endpoint protegido y optimizado: Creación segura de issues en GitHub con manejo fino y auditoría
+# Endpoint webhook para recibir pagos con tarjeta de crédito vía Stripe (Fiduciario Internacional)
+@app.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    try:
+        event_data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Payload inválido")
+
+    event_type = event_data.get("type")
+
+    if event_type == "checkout.session.completed":
+        session = event_data.get("data", {}).get("object", {})
+        customer_email = session.get("customer_email") or session.get("customer_details", {}).get("email")
+        customer_name = session.get("customer_details", {}).get("name", "Cliente Enterprise")
+        amount_total = session.get("amount_total", 49900) / 100.0
+
+        fecha_expiracion = datetime.now() + timedelta(days=365)
+        raw_key = f"REMI-FIAT-{customer_email}-{datetime.utcnow().isoformat()}"
+        hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
+        licencia_final = f"REMI-FIAT-ANNUAL-{hash_key}"
+
+        license_record = {
+            "email": customer_email,
+            "tx_hash": "STRIPE_FIAT_CHECKOUT",
+            "license": licencia_final,
+            "issued_at": datetime.utcnow().isoformat(),
+            "expires": fecha_expiracion.strftime("%Y-%m-%d"),
+            "tier": "enterprise",
+            "status": "ACTIVE",
+            "client_name": customer_name
+        }
+
+        # Guardar automáticamente en MongoDB usando la función nativa del búnker
+        db_result = save_license(license_record)
+        logger.info(f"[LICENCIA STRIPE EMITIDA]: {customer_email} - Clave: {licencia_final}")
+
+        return {
+            "status": "PROCESSED",
+            "message": "Licencia emitida automáticamente por pago con tarjeta",
+            "license_key": licencia_final,
+            "email": customer_email
+        }
+
+    return {"status": "IGNORED", "reason": f"Evento {event_type} no requiere acción"}
+
+# Endpoint protegido y optimizado: Creación segura de issues en GitHub
 @app.post("/github/create-issue", tags=["GitHub Automation"])
 async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify_api_key)):
-    """Crea un issue en GitHub de forma segura, no bloqueante, con auditoría persistente y manejo de excepciones de red."""
     token = os.getenv("GITHUB_BOT_TOKEN")
     if not token:
         logger.error("GITHUB_BOT_TOKEN no configurado en el servidor.")
@@ -142,11 +188,10 @@ async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify
     
     def _create_issue_sync():
         from github import Github
-        # Inicialización segura con control de compatibilidad de timeout
         try:
             g = Github(token, timeout=15)
         except TypeError:
-            g = Github(token)  # Fallback para versiones de PyGithub que no aceptan timeout en el init
+            g = Github(token)
             
         repo_name = os.getenv("GITHUB_REPO", "Jramone3/REMI_Enterprise_Suite")
         repo = g.get_repo(repo_name)
@@ -155,7 +200,6 @@ async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify
     try:
         github_issue = await run_in_threadpool(_create_issue_sync)
         
-        # Auditoría persistente en base de datos
         audit_entry = {
             "action": "CREATE_GITHUB_ISSUE",
             "issue_number": github_issue.number,
@@ -173,7 +217,6 @@ async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify
         }
         
     except Exception as ge:
-        # Manejo específico y seguro sin fugar trazas de error crudas al cliente
         error_msg = str(ge)
         logger.error(f"Fallo en integración con GitHub API: {error_msg}")
         
