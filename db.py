@@ -36,3 +36,14 @@ def find_license_by_email(email: str):
         return db["licenses"].find_one({"email": email}, {"_id": 0})
     finally:
         client.close()
+
+def save_audit_log(log_entry: dict):
+    """Guarda un registro de auditoría en la colección audit_logs de la base de datos."""
+    try:
+        db = get_db()
+        if db is not None:
+            db.audit_logs.insert_one(log_entry)
+            return {"ok": True}
+        return {"ok": False, "error": "Base de datos no disponible"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
