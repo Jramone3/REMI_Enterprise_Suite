@@ -11,7 +11,6 @@ def init_db():
     """Inicializa la base de datos y crea los índices únicos necesarios en el arranque."""
     client = get_client()
     db = client["remi_enterprise"]
-    # Crear índices únicos explícitamente en el arranque
     db["licenses"].create_index("tx_hash", unique=True)
     db["licenses"].create_index("email", unique=True)
     client.close()
@@ -37,13 +36,14 @@ def find_license_by_email(email: str):
     finally:
         client.close()
 
-def save_audit_log(log_entry: dict):
-    """Guarda un registro de auditoría en la colección audit_logs de la base de datos."""
+def save_audit_log(log_entry: dict) -> dict:
+    """Guarda un registro de auditoría en la colección audit_logs de la base de datos de manera segura."""
+    client = get_client()
+    db = client["remi_enterprise"]
     try:
-        db = get_db()
-        if db is not None:
-            db.audit_logs.insert_one(log_entry)
-            return {"ok": True}
-        return {"ok": False, "error": "Base de datos no disponible"}
+        db["audit_logs"].insert_one(log_entry)
+        return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+    finally:
+        client.close()

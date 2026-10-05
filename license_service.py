@@ -142,8 +142,12 @@ async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify
     
     def _create_issue_sync():
         from github import Github
-        # Timeout de conexión configurado a 15 segundos para evitar bloqueos prolongados
-        g = Github(token, timeout=15)
+        # Inicialización segura con control de compatibilidad de timeout
+        try:
+            g = Github(token, timeout=15)
+        except TypeError:
+            g = Github(token)  # Fallback para versiones de PyGithub que no aceptan timeout en el init
+            
         repo_name = os.getenv("GITHUB_REPO", "Jramone3/REMI_Enterprise_Suite")
         repo = g.get_repo(repo_name)
         return repo.create_issue(title=issue.title, body=issue.body)
