@@ -99,3 +99,24 @@ Contacto y soporte
 
 
 REMI Enterprise Suite © 2026 - Desarrollado por jramonrivasg
+
+---
+
+## 📈 Historial de Cambios y Reporte Técnico: Versión 2.2.0 (Edición Comercial)
+
+### 📋 Resumen Ejecutivo
+Se ha completado la refactorización integral, unificación de código y actualización del portal frontend de **REMI Enterprise Suite** (`app.py`). La nueva versión fusiona de manera transparente las capacidades de IA soberana local (Ollama/Llama3), el monitoreo del backend en tiempo real, el sistema avanzado de licenciamiento dual (On-Chain/Stripe) y la automatización de issues en GitHub dentro de un diseño visual unificado de nivel ejecutivo (Modo Búnker / Tech Dark).
+
+### 🛠️ Cambios Realizados
+- **Unificación de Interfaz y Diseño UI/UX (`app.py`)**: Consolidación de un diseño de estilo corporativo oscuro optimizado para contenedores y escritorios Linux (`ramon-desktop`), usando tarjetas métricas estilizadas y botones interactivos responsivos.
+- **Módulos Operativos Integrados en Pestañas**:
+  - **💬 Centro de Comando (Chat)**: Integración nativa con el motor local Ollama (`llama3`) con system prompt especializado.
+  - **🔑 Adquisición de Licencias Enterprise**: Interfaz de doble carril (Pago Cripto on-chain en red Base y Pago Fiduciario vía Stripe).
+  - **🔍 Verificador de Estado de Licencia**: Consulta en tiempo real sobre la base de datos MongoDB.
+  - **🐙 Automatización GitHub**: Creación automatizada de issues técnicos conectados al repositorio oficial.
+- **Diagnóstico de Conectividad**: Módulo de sondeo de estado (*Health Check*) en barra lateral para verificar la disponibilidad del microservicio backend (`API_BASE_URL`).
+
+### 🚀 Control de Versiones
+- **Commit unificado de frontend**: `2b2568f`
+- **Rama**: `main`
+- **Repositorio**: [Jramone3/REMI_Enterprise_Suite](https://github.com/Jramone3/REMI_Enterprise_Suite.git)
