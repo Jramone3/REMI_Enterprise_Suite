@@ -1,29 +1,37 @@
-name: REMI CI Pipeline
+# .github/workflows/ci.yml
+name: REMI Enterprise CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, feat/persist-licenses ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main", "master" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Clonar Repositorio
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.10
+    - name: Configurar Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
+    - name: Instalar Dependencias del Sistema y Proyecto
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install fastapi uvicorn requests pydantic pytest httpx pymongo pygithub
 
-    - name: Run Tests with Unittest
+    - name: Ejecutar Pruebas Unitarias con Pytest
+      env:
+        TEST_MODE: "True"
+        REMI_API_KEY: "test_admin_key_123"
       run: |
-        python -m unittest discover -s . -p "test_*.py"
+        pytest -v
+
+    - name: Validar Construcción de Docker Image
+      run: |
+        docker build -t remi-enterprise-test:latest .
