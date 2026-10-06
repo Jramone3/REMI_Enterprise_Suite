@@ -8,12 +8,16 @@ def get_client():
     return MongoClient(MONGO_URI)
 
 def init_db():
-    """Inicializa la base de datos y crea los índices únicos necesarios en el arranque."""
+    """Inicializa la base de datos y crea los índices únicos necesarios de forma segura."""
     client = get_client()
     db = client["remi_enterprise"]
-    db["licenses"].create_index("tx_hash", unique=True)
-    db["licenses"].create_index("email", unique=True)
-    client.close()
+    try:
+        db["licenses"].create_index("tx_hash", unique=True)
+        db["licenses"].create_index("email", unique=True)
+    except Exception as e:
+        print(f"[Aviso DB] Nota al crear índices (posiblemente ya existan): {e}")
+    finally:
+        client.close()
 
 def save_license(license_data: dict) -> dict:
     client = get_client()
@@ -22,7 +26,7 @@ def save_license(license_data: dict) -> dict:
         db["licenses"].insert_one(license_data)
         return {"ok": True}
     except Exception as e:
-        if "duplicate key error" in str(e):
+        if "duplicate key error" in str(e) or "E11000" in str(e):
             return {"ok": False, "error": "already exists"}
         return {"ok": False, "error": str(e)}
     finally:
