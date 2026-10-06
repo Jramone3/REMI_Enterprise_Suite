@@ -1,4 +1,4 @@
-k# license_service.py - Microservicio de Licenciamiento FastAPI (Edición 100/100 con Stripe y Búnker DB)
+# license_service.py - Microservicio de Licenciamiento FastAPI (Producción)
 import os
 import logging
 from datetime import datetime, timedelta
@@ -25,7 +25,7 @@ def startup_event():
     init_db()
     logger.info("Búnker DB inicializado y restricciones de índices únicos aplicadas.")
 
-# Esquemas de datos (Soporte Cripto y Stripe)
+# Esquemas de datos
 class LicenseRequest(BaseModel):
     email: str
     tx_hash: str
@@ -54,9 +54,9 @@ def verify_api_key(x_api_key: str = Header(..., description="API Key de Administ
 
 @app.get("/")
 def health_check():
-    return {"status": "online", "service": "REMI License Microservice", "sovereignty": "sda5"}
+    return {"status": "online", "service": "REMI License Microservice"}
 
-# Endpoint público blindado: Verifica licencia por correo ocultando datos sensibles
+# Endpoint público: Verifica licencia por correo
 @app.get("/licenses/verify/{email}")
 def verify_license(email: str):
     record = find_license_by_email(email)
@@ -75,7 +75,7 @@ def verify_license(email: str):
     }
     return public_response
 
-# Endpoint protegido: Emisión de licencia con validación on-chain y API Key obligatoria
+# Endpoint protegido: Emisión de licencia con validación on-chain
 @app.post("/licenses/issue")
 def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key)):
     if not payload.email or not payload.tx_hash:
@@ -127,25 +127,32 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
         "expires": fecha_expiracion.strftime("%Y-%m-%d")
     }
 
-# Endpoint webhook para recibir pagos con tarjeta de crédito vía Stripe (Fiduciario Internacional)
+# Endpoint webhook de Stripe con verificación criptográfica real de firma
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
+    import stripe
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
+    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
+    if not endpoint_secret:
+        logger.error("STRIPE_WEBHOOK_SECRET no está configurado.")
+        raise HTTPException(status_code=500, detail="Webhook secret no configurado en el servidor.")
 
     try:
-        event_data = await request.json()
-    except Exception:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError:
         raise HTTPException(status_code=400, detail="Payload inválido")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Firma de webhook de Stripe inválida")
 
-    event_type = event_data.get("type")
+    event_type = event.get("type")
+    event_data = event.get("data", {}).get("object", {})
 
     if event_type == "checkout.session.completed":
-        session = event_data.get("data", {}).get("object", {})
-        customer_email = session.get("customer_email") or session.get("customer_details", {}).get("email")
-        customer_name = session.get("customer_details", {}).get("name", "Cliente Enterprise")
-        amount_total = session.get("amount_total", 49900) / 100.0
-
+        customer_email = event_data.get("customer_email") or event_data.get("customer_details", {}).get("email")
+        customer_name = event_data.get("customer_details", {}).get("name", "Cliente Enterprise")
+        
         fecha_expiracion = datetime.now() + timedelta(days=365)
         raw_key = f"REMI-FIAT-{customer_email}-{datetime.utcnow().isoformat()}"
         hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
@@ -162,7 +169,6 @@ async def stripe_webhook(request: Request):
             "client_name": customer_name
         }
 
-        # Guardar automáticamente en MongoDB usando la función nativa del búnker
         db_result = save_license(license_record)
         logger.info(f"[LICENCIA STRIPE EMITIDA]: {customer_email} - Clave: {licencia_final}")
 
@@ -175,7 +181,7 @@ async def stripe_webhook(request: Request):
 
     return {"status": "IGNORED", "reason": f"Evento {event_type} no requiere acción"}
 
-# Endpoint protegido y optimizado: Creación segura de issues en GitHub
+# Endpoint protegido: Creación segura de issues en GitHub
 @app.post("/github/create-issue", tags=["GitHub Automation"])
 async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify_api_key)):
     token = os.getenv("GITHUB_BOT_TOKEN")
