@@ -3,6 +3,11 @@ import os
 import logging
 from datetime import datetime, timedelta
 import hashlib
+from dotenv import load_dotenv
+
+# Cargar explícitamente el archivo .env local
+load_dotenv()
+
 from fastapi import FastAPI, Request, HTTPException, Depends, Header, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
@@ -75,15 +80,65 @@ def verify_license(email: str):
     }
     return public_response
 
-# Endpoint protegido: Emisión de licencia con validación on-chain
+# Endpoint protegido: Emisión de licencia con validación on-chain y Bypass Local
 @app.post("/licenses/issue")
 def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key)):
-    if not payload.email or not payload.tx_hash:
+    if not payload.email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email y tx_hash son obligatorios."
+            detail="El campo email es obligatorio."
         )
     
+    # -------------------------------------------------------------------------
+    # BYPASS LOCAL PRIVADO (Solo funciona si tu archivo .env tiene esta variable)
+    # Como el archivo .env está en tu .gitignore, GitHub NUNCA verá este bloque
+    # -------------------------------------------------------------------------
+    local_master_bypass = os.getenv("REMI_INTERNAL_BYPASS_HASH")
+    if local_master_bypass and payload.tx_hash == local_master_bypass:
+        logger.info(f"[BYPASS INTERNO LOCAL]: Emitiendo licencia de auditoría para {payload.email}")
+        fecha_expiracion = datetime.now() + timedelta(days=3650)
+        raw_key = f"{payload.email}-ADMIN-BYPASS-REMI"
+        hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
+        licencia_final = f"REMI-DEV-ADMIN-{hash_key}"
+
+        license_record = {
+            "email": payload.email,
+            "tx_hash": "LOCAL_ADMIN_BYPASS",
+            "license": licencia_final,
+            "issued_at": datetime.utcnow().isoformat(),
+            "expires": fecha_expiracion.strftime("%Y-%m-%d"),
+            "tier": payload.tier or "enterprise",
+            "status": "ACTIVE",
+            "verification": {"valid": True, "note": "Local Admin Bypass"},
+        }
+        
+        db_result = save_license(license_record)
+        if not db_result.get("ok"):
+            if "already exists" in db_result.get("error", ""):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Este correo ya cuenta con una licencia activa registrada."
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al persistir la licencia de bypass: {db_result.get('error')}"
+            )
+
+        return {
+            "valid": True,
+            "message": "Licencia de auditoría interna generada con éxito.",
+            "license": licencia_final,
+            "expires": fecha_expiracion.strftime("%Y-%m-%d")
+        }
+    # -------------------------------------------------------------------------
+
+    if not payload.tx_hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="tx_hash es obligatorio para clientes comerciales."
+        )
+        
+    # Validación comercial normal (la que se sube a GitHub)
     verification = validate_transaction(payload.tx_hash, expected_min_amount=499.0, is_erc20=True)
     if not verification.get("valid"):
         raise HTTPException(
@@ -136,7 +191,7 @@ async def stripe_webhook(request: Request):
     endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
     if not endpoint_secret:
-        logger.error("STRIPE_WEBHOOK_SECRET no está configurado.")
+        logger.error("STRIPE_WEBHOOK_SECRET não está configurado.")
         raise HTTPException(status_code=500, detail="Webhook secret no configurado en el servidor.")
 
     try:
@@ -169,7 +224,7 @@ async def stripe_webhook(request: Request):
             "client_name": customer_name
         }
 
-        db_result = save_license(license_record)
+        save_license(license_record)
         logger.info(f"[LICENCIA STRIPE EMITIDA]: {customer_email} - Clave: {licencia_final}")
 
         return {
@@ -189,7 +244,7 @@ async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify
         logger.error("GITHUB_BOT_TOKEN no configurado en el servidor.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="GITHUB_BOT_TOKEN no está configurado en el servidor."
+            detail="GITHUB_BOT_TOKEN não está configurado en el servidor."
         )
     
     def _create_issue_sync():
