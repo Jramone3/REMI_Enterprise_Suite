@@ -85,7 +85,7 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
                         st.error("❌ Error: MONGO_URI no está configurada en las variables de entorno de Render.")
                     else:
                         client_db = MongoClient(MONGO_URI)
-                        db = client_db["remi"]
+                        db = client_db.get_database("remi")
                         collection = db["licenses"] if "licenses" in db.list_collection_names() else db["users"]
                         record = collection.find_one({"email": email_input})
                         
