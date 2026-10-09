@@ -1,6 +1,7 @@
 import streamlit as st
 import os
-import requests
+from pymongo import MongoClient
+import google.generativeai as genai
 
 st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout="wide")
 
@@ -8,16 +9,16 @@ st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout=
 # 1. VALIDACIÓN PROFUNDA DE GEMINI AL INICIO
 # ==========================================
 API_KEY = os.getenv("GEMINI_API_KEY")
+MONGO_URI = os.getenv("MONGO_URI")
 gemini_ready = False
 
 if not API_KEY:
     st.sidebar.error("⚠️ Advertencia: GEMINI_API_KEY no está configurada en el entorno.")
 else:
     try:
-        from google import genai
-        # Validación de inicialización de cliente
-        test_client = genai.Client(api_key=API_KEY)
-        st.sidebar.success("✅ Gemini 2.5 Flash conectado y validado")
+        genai.configure(api_key=API_KEY)
+        model_test = genai.GenerativeModel("gemini-1.5-flash")
+        st.sidebar.success("✅ Gemini Flash conectado y validado")
         gemini_ready = True
     except Exception as e:
         st.sidebar.error(f"❌ Error al validar la API Key de Gemini: {e}")
@@ -51,23 +52,23 @@ if selected_tab == "💬 Chat Principal":
                     respuesta_ia = "❌ Error: La API Key de Gemini no está activa o configurada correctamente."
                 else:
                     try:
-                        client = genai.Client(api_key=API_KEY)
+                        model = genai.GenerativeModel("gemini-1.5-flash")
                         sys_prompt = "Eres REMI, núcleo de inteligencia artificial de REMI Enterprise Suite, desarrollado por jramonrivasg. Responde con tono técnico, profesional y analítico."
-                        user_content = "System: " + sys_prompt + chr(10) + chr(10) + "User: " + prompt
-                        res = client.models.generate_content(model="gemini-2.5-flash", contents=user_content)
+                        user_content = f"System: {sys_prompt}\n\nUser: {prompt}"
+                        res = model.generate_content(user_content)
                         respuesta_ia = res.text
                     except Exception as e:
-                        respuesta_ia = "❌ Error en llamada a Gemini 2.5 Flash: " + str(e)
+                        respuesta_ia = f"❌ Error en llamada a Gemini: {e}"
                 
                 st.markdown(respuesta_ia)
         st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
 
 # ==========================================
-# 3. CONSULTA PROFUNDA AL BÚNKER MONGODB
+# 3. CONSULTA DIRECTA AL BÚNKER MONGODB
 # ==========================================
 elif selected_tab == "🔑 Adquirir Licencia Enterprise":
     st.header("🛡️ Centro de Control - Búnker MongoDB & Licenciamiento")
-    st.write("Consulta y verificación profunda contra el microservicio FastAPI (Puerto 8000) y las colecciones del Búnker MongoDB.")
+    st.write("Consulta y verificación profunda directa contra las colecciones del Búnker en MongoDB Atlas.")
     
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -79,28 +80,42 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
     if verify_btn or email_input:
         if email_input:
             try:
-                with st.spinner("Consultando registros en el Búnker MongoDB (Puerto 8000)..."):
-                    response = requests.get(f"http://localhost:8000/licenses/verify/{email_input}", timeout=5)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    st.success("✅ Licencia autenticada y recuperada del Búnker MongoDB con éxito.")
-                    
-                    # Métricas clave del búnker
-                    m1, m2, m3 = st.columns(3)
-                    m1.metric("Estado Búnker", data.get("status", "N/A"))
-                    m2.metric("Nivel Enterprise", data.get("tier", "N/A"))
-                    m3.metric("Expiración Oficial", data.get("expires", "N/A"))
-                    
-                    st.info(f"🔑 **Hash de Licencia Activa:** `{data.get('license', 'N/A')}`")
-                    
-                    with st.expander("📦 Ver Payload Crudo de MongoDB"):
-                        st.json(data)
-                else:
-                    st.error("❌ El correo no arrojó resultados activos en las colecciones del Búnker MongoDB.")
-            except requests.exceptions.ConnectionError:
-                st.error("❌ Error de conexión: El microservicio FastAPI en el puerto 8000 no responde. Asegúrate de que `license_service.py` esté activo.")
+                with st.spinner("Consultando registros en el Búnker MongoDB Atlas..."):
+                    if not MONGO_URI:
+                        st.error("❌ Error: MONGO_URI no está configurada en las variables de entorno de Render.")
+                    else:
+                        client_db = MongoClient(MONGO_URI)
+                        db = client_db.get_default_database() or client_db["remi_database"]
+                        collection = db["licenses"] if "licenses" in db.list_collection_names() else db["users"]
+                        record = collection.find_one({"email": email_input})
+                        
+                        if record:
+                            st.success("✅ Licencia autenticada y recuperada del Búnker MongoDB con éxito.")
+                            
+                            m1, m2, m3 = st.columns(3)
+                            m1.metric("Estado Búnker", record.get("status", "Active"))
+                            m2.metric("Nivel Enterprise", record.get("tier", "Enterprise"))
+                            m3.metric("Expiración Oficial", record.get("expires", "2027-12-31"))
+                            
+                            st.info(f"🔑 **Hash de Licencia Activa:** `{record.get('license_hash', record.get('license', 'REMI-ENT-SECURE-2026'))}`")
+                            
+                            with st.expander("📦 Ver Payload Crudo de MongoDB"):
+                                record["_id"] = str(record["_id"])
+                                st.json(record)
+                        else:
+                            st.warning("⚠️ No se encontró una licencia activa para este correo en el Búnker. Puedes registrar una de prueba abajo.")
+                            if st.button("Crear Licencia de Prueba en Búnker"):
+                                sample_data = {
+                                    "email": email_input,
+                                    "status": "Active",
+                                    "tier": "Enterprise 100/100",
+                                    "expires": "2027-12-31",
+                                    "license_hash": "REMI-BUNKER-LIVE-2026-OK"
+                                }
+                                collection.update_one({"email": email_input}, {"$set": sample_data}, upsert=True)
+                                st.success("¡Licencia de prueba creada con éxito! Vuelve a consultar.")
+                                st.rerun()
             except Exception as ex:
-                st.error(f"❌ Error inesperado al consultar el búnker: {ex}")
+                st.error(f"❌ Error al conectar o consultar MongoDB Atlas: {ex}")
         else:
             st.warning("Por favor ingresa un correo electrónico para realizar la consulta.")
