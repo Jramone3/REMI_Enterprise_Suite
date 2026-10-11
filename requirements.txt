@@ -12,3 +12,4 @@ slowapi>=0.1.9
 PyGithub>=2.2.0
 pydantic>=2.0.0
 stripe>=8.0.0
+pytest>=8.0.0
