@@ -4,6 +4,7 @@ import datetime
 from pymongo import MongoClient
 import google.generativeai as genai
 from web3 import Web3
+from dotenv import load_dotenv
 
 st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout="wide")
 
@@ -77,8 +78,10 @@ Transparencia Fiscal SENIAT - Venezuela | Registro en Búnker MongoDB Atlas
 # ==========================================
 # 1. VALIDACIÓN PROFUNDA DE GEMINI AL INICIO
 # ==========================================
+# Cargar variables de entorno desde el archivo .env local
+load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
-MONGO_URI = "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority")
 gemini_ready = False
 
 if not API_KEY:
