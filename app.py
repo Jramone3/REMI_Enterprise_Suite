@@ -10,7 +10,7 @@ st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout=
 # ==========================================
 API_KEY = os.getenv("GEMINI_API_KEY")
 DEFAULT_MONGO = "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
-MONGO_URI = os.getenv("MONGO_URI", DEFAULT_MONGO)
+MONGO_URI = "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
 gemini_ready = False
 
 if not API_KEY:
