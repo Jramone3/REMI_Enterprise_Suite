@@ -9,7 +9,8 @@ st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout=
 # 1. VALIDACIÓN PROFUNDA DE GEMINI AL INICIO
 # ==========================================
 API_KEY = os.getenv("GEMINI_API_KEY")
-MONGO_URI = os.getenv("MONGO_URI")
+DEFAULT_MONGO = "mongodb+srv://jramonrivasg:FAqOTunNR-QCbYCLAJV2psTkg5DZpHoh@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
+MONGO_URI = os.getenv("MONGO_URI", DEFAULT_MONGO)
 gemini_ready = False
 
 if not API_KEY:
@@ -17,7 +18,7 @@ if not API_KEY:
 else:
     try:
         genai.configure(api_key=API_KEY)
-        model_test = genai.GenerativeModel("gemini-1.5-flash")
+        model_test = genai.GenerativeModel("gemini-2.5-flash")
         st.sidebar.success("✅ Gemini Flash conectado y validado")
         gemini_ready = True
     except Exception as e:
@@ -52,7 +53,7 @@ if selected_tab == "💬 Chat Principal":
                     respuesta_ia = "❌ Error: La API Key de Gemini no está activa o configurada correctamente."
                 else:
                     try:
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-2.5-flash")
                         sys_prompt = "Eres REMI, núcleo de inteligencia artificial de REMI Enterprise Suite, desarrollado por jramonrivasg. Responde con tono técnico, profesional y analítico."
                         user_content = f"System: {sys_prompt}\n\nUser: {prompt}"
                         res = model.generate_content(user_content)
@@ -85,7 +86,8 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
                         st.error("❌ Error: MONGO_URI no está configurada en las variables de entorno de Render.")
                     else:
                         client_db = MongoClient(MONGO_URI)
-                        db = client_db.get_database("remi")
+                        db_name = os.getenv("REMI_DB_NAME", "remi_enterprise")
+                        db = client_db.get_database(db_name)
                         collection = db["licenses"] if "licenses" in db.list_collection_names() else db["users"]
                         record = collection.find_one({"email": email_input})
                         
