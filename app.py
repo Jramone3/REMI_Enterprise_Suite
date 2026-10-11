@@ -9,7 +9,7 @@ st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout=
 # 1. VALIDACIÓN PROFUNDA DE GEMINI AL INICIO
 # ==========================================
 API_KEY = os.getenv("GEMINI_API_KEY")
-DEFAULT_MONGO = "mongodb+srv://jramonrivasg:FAqOTunNR-QCbYCLAJV2psTkg5DZpHoh@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
+DEFAULT_MONGO = "mongodb+srv://remi_admin:ZIQpjZTFCuclIPA0@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
 MONGO_URI = os.getenv("MONGO_URI", DEFAULT_MONGO)
 gemini_ready = False
 
