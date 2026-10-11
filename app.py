@@ -81,7 +81,7 @@ Transparencia Fiscal SENIAT - Venezuela | Registro en Búnker MongoDB Atlas
 # Cargar variables de entorno desde el archivo .env local
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority")
+MONGO_URI = os.getenv("MONGO_URI")
 gemini_ready = False
 
 if not API_KEY:
@@ -94,6 +94,11 @@ else:
         gemini_ready = True
     except Exception as e:
         st.sidebar.error(f"❌ Error al validar la API Key de Gemini: {e}")
+
+# Verificación estricta de seguridad para el Búnker
+if not MONGO_URI:
+    st.error("🔴 **ERROR CRÍTICO DE SEGURIDAD Y CONFIGURACIÓN:** La variable de entorno `MONGO_URI` no está definida. El acceso al Búnker está bloqueado por diseño.")
+    st.stop()
 
 st.title("🤖 REMI Enterprise Suite - Centro de Comando")
 st.sidebar.title("Navegación")
