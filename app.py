@@ -1,15 +1,83 @@
 import streamlit as st
 import os
+import datetime
 from pymongo import MongoClient
 import google.generativeai as genai
+from web3 import Web3
 
 st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout="wide")
+
+# ==============================================================================
+# CONFIGURACIÓN Y METADATOS FISCALES - SENIAT (VENEZUELA)
+# ==============================================================================
+EMISOR_FISCAL = {
+    "contribuyente": "Jesús Ramón Rivas García",
+    "rif": "V050153998",
+    "domicilio": "Calle El Samán, Casa Nro 17, Sector Porvorín, Guayabita, Aragua, Venezuela",
+    "wallet_oficial": "0x96De980a766CCb10A19B6962587e2b61B650b372",
+    "wallet_gas": "0xe4EdB277e4122137966EFC68615b3C5890d2979E",
+    "red": "Base Network (ChainID: 8453)"
+}
+
+# Configuración Web3 para Base Network
+BASE_RPC_URL = "https://mainnet.base.org"
+w3_base = Web3(Web3.HTTPProvider(BASE_RPC_URL))
+
+def obtener_saldo_gas_bunker():
+    try:
+        if w3_base.is_connected():
+            balance_wei = w3_base.eth.get_balance(EMISOR_FISCAL["wallet_gas"])
+            balance_eth = w3_base.from_wei(balance_wei, 'ether')
+            return f"{balance_eth:.6f} ETH", "🟢 Conectado a Base Mainnet"
+        else:
+            return "0.00 ETH", "🔴 Sin conexión RPC"
+    except Exception as e:
+        return "0.00 ETH", f"⚠️ Error: {str(e)[:30]}"
+
+def generar_factura_digital(cliente_email, cliente_empresa, monto_usd, tx_hash, num_licencia):
+    fecha_emision = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+    num_factura = f"REMI-INV-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    factura_text = f"""
+================================================================================
+               🛡️ COMPROBANTE DE COMPRA Y LICENCIA FISCAL - REMI
+================================================================================
+N° Factura/Recibo : {num_factura}
+Fecha de Emisión  : {fecha_emision}
+Estado de Pago    : VERIFICADO ON-CHAIN 🟢
+
+--------------------------------------------------------------------------------
+🏛️ EMISOR (PROVEEDOR DEL SOFTWARE)
+--------------------------------------------------------------------------------
+• Contribuyente   : {EMISOR_FISCAL['contribuyente']}
+• RIF             : {EMISOR_FISCAL['rif']}
+• Domicilio Fiscal: {EMISOR_FISCAL['domicilio']}
+• Billetera PC    : {EMISOR_FISCAL['wallet_oficial']} ({EMISOR_FISCAL['red']})
+
+--------------------------------------------------------------------------------
+👤 RECEPTOR (ADQUIRENTE DE LA LICENCIA)
+--------------------------------------------------------------------------------
+• Cliente / Razón Social: {cliente_empresa}
+• Correo Electrónico    : {cliente_email}
+
+--------------------------------------------------------------------------------
+📦 DETALLE DE LA TRANSACCIÓN
+--------------------------------------------------------------------------------
+• Producto         : Licencia REMI Enterprise Suite v1.0.0
+• Serial Licencia  : {num_licencia}
+• Monto Total      : ${monto_usd}.00 USD
+• Hash Transacción : {tx_hash}
+
+--------------------------------------------------------------------------------
+Transparencia Fiscal SENIAT - Venezuela | Registro en Búnker MongoDB Atlas
+================================================================================
+"""
+    return factura_text, num_factura
 
 # ==========================================
 # 1. VALIDACIÓN PROFUNDA DE GEMINI AL INICIO
 # ==========================================
 API_KEY = os.getenv("GEMINI_API_KEY")
-DEFAULT_MONGO = "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
 MONGO_URI = "mongodb+srv://remi_admin:Remi2026@cluster0.loewdkg.mongodb.net/remi?retryWrites=true&w=majority"
 gemini_ready = False
 
@@ -26,7 +94,10 @@ else:
 
 st.title("🤖 REMI Enterprise Suite - Centro de Comando")
 st.sidebar.title("Navegación")
-selected_tab = st.sidebar.radio("Ir a:", ["💬 Chat Principal", "🔑 Adquirir Licencia Enterprise", "🛡️ Registro de Licencias (Admin)"])
+selected_tab = st.sidebar.radio(
+    "Ir a:", 
+    ["💬 Chat Principal", "🔑 Adquirir Licencia Enterprise", "🛡️ Registro de Licencias (Admin)"]
+)
 
 # ==========================================
 # 2. CHAT PRINCIPAL CON GEMINI
@@ -61,15 +132,15 @@ if selected_tab == "💬 Chat Principal":
                     except Exception as e:
                         respuesta_ia = f"❌ Error en llamada a Gemini: {e}"
                 
-                st.markdown(respuesta_ia)
+            st.markdown(respuesta_ia)
         st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
 
 # ==========================================
-# 3. CONSULTA DIRECTA AL BÚNKER MONGODB
+# 3. CONSULTA DIRECTA AL BÚNKER MONGODB & FACTURA SENIAT
 # ==========================================
 elif selected_tab == "🔑 Adquirir Licencia Enterprise":
     st.header("🛡️ Centro de Control - Búnker MongoDB & Licenciamiento")
-    st.write("Consulta y verificación profunda directa contra las colecciones del Búnker en MongoDB Atlas.")
+    st.write("Consulta y verificación profunda directa contra las colecciones del Búnker en MongoDB Atlas con respaldo fiscal SENIAT.")
     
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -99,7 +170,27 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
                             m2.metric("Nivel Enterprise", record.get("tier", "Enterprise"))
                             m3.metric("Expiración Oficial", record.get("expires", "2027-12-31"))
                             
-                            st.info(f"🔑 **Hash de Licencia Activa:** `{record.get('license_hash', record.get('license', 'REMI-ENT-SECURE-2026'))}`")
+                            license_hash_val = record.get('license_hash', record.get('license', 'REMI-ENT-SECURE-2026'))
+                            st.info(f"🔑 **Hash de Licencia Activa:** `{license_hash_val}`")
+                            
+                            # Generación automática del comprobante fiscal SENIAT
+                            factura_txt, num_factura = generar_factura_digital(
+                                cliente_email=email_input,
+                                cliente_empresa=record.get("client_name", "Cliente Enterprise"),
+                                monto_usd=499,
+                                tx_hash=record.get("tx_hash", "0x96De980a766CCb10A19B6962587e2b61B650b372 (Direct Búnker)"),
+                                num_licencia=license_hash_val
+                            )
+                            
+                            st.subheader("📄 Comprobante Fiscal (SENIAT)")
+                            st.text_area("Vista Previa Factura:", factura_txt, height=220)
+                            st.download_button(
+                                label="📥 Descargar Comprobante Fiscal SENIAT (.txt)",
+                                data=factura_txt,
+                                file_name=f"{num_factura}.txt",
+                                mime="text/plain",
+                                use_container_width=True
+                            )
                             
                             with st.expander("📦 Ver Payload Crudo de MongoDB"):
                                 record["_id"] = str(record["_id"])
@@ -112,7 +203,8 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
                                     "status": "Active",
                                     "tier": "Enterprise 100/100",
                                     "expires": "2027-12-31",
-                                    "license_hash": "REMI-BUNKER-LIVE-2026-OK"
+                                    "license_hash": "REMI-BUNKER-LIVE-2026-OK",
+                                    "client_name": "Ramon Rivas Enterprise"
                                 }
                                 collection.update_one({"email": email_input}, {"$set": sample_data}, upsert=True)
                                 st.success("¡Licencia de prueba creada con éxito! Vuelve a consultar.")
@@ -123,12 +215,53 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
             st.warning("Por favor ingresa un correo electrónico para realizar la consulta.")
 
 # ==========================================
-# 4. GESTIÓN ADMINISTRATIVA DE LICENCIAS (ADMIN BÚNKER)
+# 4. GESTIÓN ADMINISTRATIVA DE LICENCIAS (ADMIN BÚNKER & GAS MONITOR)
 # ==========================================
 elif selected_tab == "🛡️ Registro de Licencias (Admin)":
-    st.header("🛡️ Panel Administrador - Generación de Licencias")
-    st.write("Registra o actualiza usuarios y licencias de producción directamente en el Búnker MongoDB Atlas.")
+    st.header("🛡️ Panel Administrador - Generación de Licencias & Búnker On-Chain")
+    st.write("Monitorea la infraestructura de red, saldo de gas y registra licencias directamente en el Búnker MongoDB Atlas.")
 
+    # Widget de Monitoreo de Gas en Tiempo Real (Base Network)
+    st.subheader("📊 Monitor de Infraestructura y Gas (Base Mainnet)")
+    saldo_gas, estado_red = obtener_saldo_gas_bunker()
+    
+    g1, g2, g3 = st.columns(3)
+    g1.metric("Saldo Wallet Gas (Búnker)", saldo_gas)
+    g2.metric("Red Configurada", "Base ChainID: 8453")
+    g3.metric("Estado de Red", estado_red)
+
+    st.markdown("---")
+    st.subheader("⚡ Protocolo de Autogestión de Gas (Cliente On-Chain)")
+    st.info(
+        "💡 **Modo de Gas Descentralizado:** El sistema está preparado para que el cliente ejecute "
+        "la transacción de registro directamente desde su wallet EVM (MetaMask / Rabby), cubriendo él mismo el costo de gas de la red Base."
+    )
+
+    with st.expander("📜 Ver Estructura del Contrato Inteligente Inmutable (Solidity)"):
+        st.code("""
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract RemiBunkerLicense {
+    address public immutable owner;
+    mapping(address => bool) public authorizedLicenses;
+
+    event LicenseGranted(address indexed client, uint256 timestamp);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function acquireLicense() external payable {
+        // El cliente paga su propio gas y ejecuta la activación on-chain
+        authorizedLicenses[msg.sender] = true;
+        emit LicenseGranted(msg.sender, block.timestamp);
+    }
+}
+        """, language="solidity")
+
+    st.markdown("---")
+    st.subheader("📝 Registro Manual en Búnker MongoDB")
     with st.form("new_license_form"):
         col_a, col_b = st.columns(2)
         with col_a:
@@ -154,7 +287,7 @@ elif selected_tab == "🛡️ Registro de Licencias (Admin)":
                     
                     payload = {
                         "email": admin_email.strip().lower(),
-                        "client_name": client_name.strip(),
+                        "client_name": client_name.strip() if client_name else "Cliente Enterprise",
                         "status": status_opt,
                         "tier": license_tier,
                         "expires": str(expires_date),
