@@ -26,7 +26,7 @@ else:
 
 st.title("🤖 REMI Enterprise Suite - Centro de Comando")
 st.sidebar.title("Navegación")
-selected_tab = st.sidebar.radio("Ir a:", ["💬 Chat Principal", "🔑 Adquirir Licencia Enterprise"])
+selected_tab = st.sidebar.radio("Ir a:", ["💬 Chat Principal", "🔑 Adquirir Licencia Enterprise", "🛡️ Registro de Licencias (Admin)"])
 
 # ==========================================
 # 2. CHAT PRINCIPAL CON GEMINI
@@ -83,7 +83,7 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
             try:
                 with st.spinner("Consultando registros en el Búnker MongoDB Atlas..."):
                     if not MONGO_URI:
-                        st.error("❌ Error: MONGO_URI no está configurada en las variables de entorno de Render.")
+                        st.error("❌ Error: MONGO_URI no está configurada en las variables de entorno.")
                     else:
                         client_db = MongoClient(MONGO_URI)
                         db_name = os.getenv("REMI_DB_NAME", "remi_enterprise")
@@ -121,3 +121,49 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
                 st.error(f"❌ Error al conectar o consultar MongoDB Atlas: {ex}")
         else:
             st.warning("Por favor ingresa un correo electrónico para realizar la consulta.")
+
+# ==========================================
+# 4. GESTIÓN ADMINISTRATIVA DE LICENCIAS (ADMIN BÚNKER)
+# ==========================================
+elif selected_tab == "🛡️ Registro de Licencias (Admin)":
+    st.header("🛡️ Panel Administrador - Generación de Licencias")
+    st.write("Registra o actualiza usuarios y licencias de producción directamente en el Búnker MongoDB Atlas.")
+
+    with st.form("new_license_form"):
+        col_a, col_b = st.columns(2)
+        with col_a:
+            admin_email = st.text_input("Correo del Cliente:")
+            client_name = st.text_input("Nombre de la Empresa / Cliente:")
+            license_tier = st.selectbox("Nivel (Tier):", ["Enterprise 100/100", "Enterprise Standard", "Trial / PoC"])
+        with col_b:
+            expires_date = st.date_input("Fecha de Expiración:")
+            status_opt = st.selectbox("Estado de la Licencia:", ["Active", "Suspended", "Expired"])
+            custom_hash = st.text_input("Hash Personalizado (Opcional):", placeholder="Deja en blanco para auto-generar")
+
+        submit_btn = st.form_submit_button("🔑 Registrar / Actualizar Licencia en Búnker")
+
+    if submit_btn:
+        if admin_email:
+            try:
+                with st.spinner("Escribiendo registro en el Búnker MongoDB..."):
+                    client_db = MongoClient(MONGO_URI)
+                    db = client_db.get_database(os.getenv("REMI_DB_NAME", "remi_enterprise"))
+                    collection = db["licenses"]
+                    
+                    hash_final = custom_hash if custom_hash else f"REMI-ENT-{admin_email.split('@')[0].upper()}-2026"
+                    
+                    payload = {
+                        "email": admin_email.strip().lower(),
+                        "client_name": client_name.strip(),
+                        "status": status_opt,
+                        "tier": license_tier,
+                        "expires": str(expires_date),
+                        "license_hash": hash_final
+                    }
+                    
+                    collection.update_one({"email": admin_email.strip().lower()}, {"$set": payload}, upsert=True)
+                    st.success(f"✅ Licencia registrada exitosamente para `{admin_email}` con hash `{hash_final}`.")
+            except Exception as e:
+                st.error(f"❌ Error al escribir en el Búnker: {e}")
+        else:
+            st.warning("⚠️ Debes proporcionar un correo electrónico válido.")
