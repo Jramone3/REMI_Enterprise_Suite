@@ -1,31 +1,12 @@
-# Python cache and env
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Coverage
-.coverage
-coverage.xml
-
-# Virtual envs
-.venv/
-env/
-venv/
-
-# Env files
-.env
-.env.*
-
-# Editor
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-
-# Logs
+# Dependencias y construcciones pesadas
+node_modules/
+graphify-out/
+bunker_respaldo/
+auditoria_remota/
+*.node
+*.onnx
+*.mp3
 *.log
-
-# Build
-dist/
-build/
+*.bin
+*.tar.gz
+*.tgz
