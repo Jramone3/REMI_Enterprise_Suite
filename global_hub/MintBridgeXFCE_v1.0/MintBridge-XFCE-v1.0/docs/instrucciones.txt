@@ -1,0 +1,18 @@
+MintBridge XFCE v1.0 – Guía rápida de ejecución
+
+🟩 En Windows 10 Enterprise:
+1. Abrir PowerShell como administrador
+2. Ejecutar:
+   .\Migracion.ps1
+   .\Blindaje.ps1
+   .\Verificacion.ps1
+   .\ControlEstructura.ps1
+
+🟦 En Linux Mint XFCE:
+1. Abrir terminal XFCE
+2. Ejecutar:
+   bash ValidarXFCE.sh
+   bash BlindajeLinux.sh
+   bash ControlFinal.sh
+
+🔐 Todos los scripts están firmados. Verifica con los archivos `.sig` antes de ejecutar.

@@ -1,0 +1,37 @@
+node_modules/
+.next/
+REMI_CHATS/node_modules/
+REMI_CHATS/.next/
+__pycache__/
+*.pyc
+.env
+.env.local
+*.log
+BACKUPS_BUNKER/*.tar.gz
+.DS_Store
+.vscode/
+.idea/
+.env
+"USUSARIO Y CLAVE N8N txt"
+BACKUPS_BUNKER/
+DATOS_IMPORTANTES/
+JSON_RESCATADOS/
+*.img
+*.mp4
+*.xml
+*.ini
+logs_remi.txt
+# Carpetas de seguridad (BÚNKERS)
+    BUNKER_WALLET/
+    REMI_CHATS/BUNKER_WALLET/
+    
+    # Archivos de llaves y secretos
+    *.txt
+    *.gpg
+    llave_para_cifrar.txt
+    ACCESO_CUSTODIO.txt
+    
+    # Archivos de configuración de nodos
+    node_modules/
+    .env
+    ```
