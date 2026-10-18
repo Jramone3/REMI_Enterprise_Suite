@@ -1,0 +1,19 @@
+MintBridge XFCE v1.0 – Verificación de firma digital
+
+1. Importar la clave pública:
+   gpg --import jramonrivasg_publickey.asc
+
+2. Verificar la firma de un archivo:
+   gpg --verify nombre_del_archivo.sig nombre_del_archivo
+
+3. Confirmar que la firma es válida y corresponde a "jramonrivasg".
+
+4. Repetir para cada archivo firmado (.ps1, .sh, .pdf, .png).
+
+5. Si usas Kleopatra:
+   - Abrir Kleopatra
+   - Importar la clave pública
+   - Usar “Verificar archivo firmado” desde el menú contextual
+
+[^Clave especial de validación comunitaria: reservada, cifrada y no distribuida públicamente.]: 
+

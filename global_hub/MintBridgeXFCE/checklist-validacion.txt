@@ -1,0 +1,41 @@
+MintBridge XFCE v1.0 — Checklist de validación técnica
+
+🔹 Estructura HTML
+[✔] MintBridge.html estructurado
+[⏳] Banner/logo final pendiente
+
+🔹 Recursos gráficos
+[✔] logo-final.png validado
+[✔] banner-validado.png en revisión
+[✔] assets/ completa
+
+🔹 Documentación reproducible
+[✔] README.txt
+[✔] version-log.txt
+[✔] checklist-validacion.txt
+[⏳] instalar.sh en revisión
+
+🔹 Validación operativa
+[✔] Visualización en XFCE
+[✔] Enlaces internos funcionales
+[⏳] Revisión final antes de publicación
+
+🔹 Contacto técnico
+jramonrivasg@proton.mail
+nano ~/MintBridgeXFCE/version-log.txt
+MintBridge XFCE v1.0 — Historial de cambios
+
+v1.0 [16/09/2025]
+- Estructura HTML validada
+- Recursos gráficos integrados
+- Documentación reproducible completada
+- Preparación de paquete .zip operativo
+
+Contacto técnico: jramonrivasg@proton.mail
+nano ~/MintBridgeXFCE/instalar.sh
+#!/bin/bash
+echo "Instalando MintBridge XFCE v1.0..."
+mkdir -p ~/MintBridgeXFCE/assets
+cp MintBridge.html ~/MintBridgeXFCE/
+cp -r assets/ ~/MintBridgeXFCE/
+echo "Instalación completada en ~/MintBridgeXFCE/"
