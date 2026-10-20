@@ -1,2 +1,0 @@
-2026-05-05 09:09:58 - PROTOCOLO ORO: Sello de Patrimonio detectado. Transacción 0x18a9... validada en Base.
-2026-05-05 15:21:51 - PROTOCOLO ORO: Sello de Patrimonio detectado. Transacción 0x18a9... validada en Base.

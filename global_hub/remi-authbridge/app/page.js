@@ -34,26 +34,43 @@ export default function Page() {
     try {
       const res = await fetch('http://localhost:5000/api/remi', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: mensajeUsuario, speak: true, lang: 'es' }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: mensajeUsuario,
+          speak: true,
+          lang: 'es'
+        })
       });
 
       if (res.ok) {
         const data = await res.json();
+        const textoRespuesta = data.response_payload || data.message || data.response || data.mensaje || '[REMI Core]: Procesado correctamente.';
+        
         setChatHistorial(prev => [
           ...prev,
-          { remite: 'remi', texto: data.mensaje || '[REMI Core]: Procesado correctamente.' }
+          { 
+            remite: 'remi', 
+            texto: textoRespuesta 
+          }
         ]);
       } else {
         setChatHistorial(prev => [
           ...prev,
-          { remite: 'remi', texto: `[REMI Enterprise Core]: Error de comunicación (HTTP ${res.status}).` }
+          { 
+            remite: 'remi', 
+            texto: `[REMI Enterprise Core]: Error de comunicación (HTTP ${res.status}).` 
+          }
         ]);
       }
     } catch (error) {
       setChatHistorial(prev => [
         ...prev,
-        { remite: 'remi', texto: `[REMI Local Engine]: Error de red al conectar con el backend.` }
+        { 
+          remite: 'remi', 
+          texto: `[REMI Local Engine]: Error de red al conectar con el backend.` 
+        }
       ]);
     }
   };

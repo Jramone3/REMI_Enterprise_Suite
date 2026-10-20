@@ -1,42 +1,39 @@
-let auth0 = null;
+/**
+ * REMI Enterprise Suite - Frontend Gateway Adapter
+ * Robust HTTP client bridge targeting backend port 5000.
+ */
 
-const config = {
-  domain: "dev-bo2ybhrn0nw1awbe.us.auth0.com",
-  client_id: "N7Hx2pFEtikCOvNrxJI7EcduAkAACNNW",
-  redirect_uri: window.location.origin
-};
+const BACKEND_ENDPOINT = "http://localhost:5000/api/remi";
 
-const login = async () => {
-  await auth0.loginWithRedirect();
-};
+async function dispatchUserQuery(userMessage, speakAudio = true) {
+    try {
+        const payload = {
+            message: userMessage,
+            speak: speakAudio,
+            lang: "es"
+        };
 
-const logout = () => {
-  auth0.logout({ returnTo: window.location.origin });
-};
+        const response = await fetch(BACKEND_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
 
-const updateUI = async () => {
-  const isAuthenticated = await auth0.isAuthenticated();
-  document.getElementById("login").style.display = isAuthenticated ? "none" : "block";
-  document.getElementById("logout").style.display = isAuthenticated ? "block" : "none";
+        if (!response.ok) {
+            throw new Error(`HTTP network error status: ${response.status}`);
+        }
 
-  if (isAuthenticated) {
-    const user = await auth0.getUser();
-    document.getElementById("profile").textContent = JSON.stringify(user, null, 2);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("[FRONTEND_BRIDGE_ERROR]: Pipeline execution failed ->", error);
+        return {
+            status: "FAILURE",
+            message: "Error de conexión con el núcleo soberano."
+        };
+    }
+}
 
-    // Mostrar token protegido
-    const tokenVault = document.createElement("pre");
-    tokenVault.textContent = "🔐 Token GitHub: ghp_remiPatrimonialToken2025";
-    document.body.appendChild(tokenVault);
-  }
-};
-
-window.onload = async () => {
-  auth0 = await createAuth0Client(config);
-  if (window.location.search.includes("code=")) {
-    await auth0.handleRedirectCallback();
-    window.history.replaceState({}, document.title, "/");
-  }
-  updateUI();
-  document.getElementById("login").onclick = login;
-  document.getElementById("logout").onclick = logout;
-};
+module.exports = { dispatchUserQuery };
