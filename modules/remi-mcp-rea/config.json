@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "remi-rea": {
+      "command": "/home/ramon/REMI_CORE/modules/remi-mcp-rea/start_mcp_rea.sh",
+      "args": [],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
