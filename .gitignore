@@ -20,3 +20,7 @@ auditoria_remota/
 *.bin
 *.tar.gz
 *.tgz
+
+auditoria_github/
+tests/
+
