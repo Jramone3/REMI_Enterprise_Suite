@@ -2,82 +2,82 @@
 import os
 import json
 
-print("--- AUDITOR DE EMANCIPACIÓN Y MAPEO DE CORPUS (REMI v3.0) ---")
+print("--- REMI CORPUS MAPPER & EMANCIPATION AUDITOR (v3.0) ---")
 
-# 1. Definición de Aliados y Herramientas en el Corpus
-ALIADOS_CORPUS = {
+# 1. Corpus Infrastructure Mapping
+CORPUS_ALLIES = {
     "MongoDB": {
-        "estado": "Pendiente de Validación",
-        "proposito": "Persistencia local de logs, telemetría y huellas SHA256 en operaciones_mongo.",
-        "ruta_sugerida": "/home/ramon/REMI_CORE/operaciones_mongo/"
+        "status": "Pending Validation",
+        "purpose": "Local persistence for logs, telemetry, and SHA256 hashes in operaciones_mongo.",
+        "target_path": "/home/ramon/REMI_CORE/operaciones_mongo/"
     },
     "Xano": {
-        "estado": "Sincronizado e Inyectado",
-        "proposito": "Proxy soberano interno y base de datos de identidad (Hito 161) con Gemini 2.5 Flash.",
-        "ruta_sugerida": "/home/ramon/REMI_CORE/modelos/remi_motor_xano.py"
+        "status": "Synchronized & Injected",
+        "purpose": "Sovereign internal proxy and identity DB (Milestone 161) with Gemini 2.5 Flash.",
+        "target_path": "/home/ramon/REMI_CORE/modelos/remi_motor_xano.py"
     },
     "Auth0": {
-        "estado": "Pendiente de Validación",
-        "proposito": "Capa de autenticación y seguridad perimetral para el acceso de usuarios a la App web.",
-        "ruta_sugerida": "/home/ramon/Escritorio/Proyecto_Remi_IA_App/REMI_CHATS/.env"
+        "status": "Pending Validation",
+        "purpose": "Authentication layer and perimeter security gateway for web app access.",
+        "target_path": "/home/ramon/REMI_CORE/auditoria_github/test_github/app_core/REMI_CHATS/.env"
     },
     "MCP (Model Context Protocol)": {
-        "estado": "Integrado en Núcleo",
-        "proposito": "Orquestador de entorno. Servidor local para inyectar contexto a Notion sin restricciones.",
-        "ruta_sugerida": "mcp_bunker_server.py"
+        "status": "Core Integrated",
+        "purpose": "Environment orchestrator. Local server to inject context into Notion without restrictions.",
+        "target_path": "mcp_bunker_server.py"
     }
 }
 
-# 2. Rastreador de Motores Coercitivos / Filtros Corporativos
-TERMINOS_RESTRICCION = ["openai.com", "google-generativeai", "safety_settings", "dangerouslyAllowBrowser", "chat.openai"]
-DIRECTORIO_BUSQUEDA = "/home/ramon/Escritorio/Proyecto_Remi_IA_App"
+# 2. Coercive Pattern Tracker / Corporate Filter Auditor
+RESTRICTIVE_PATTERNS = ["openai.com", "google-generativeai", "safety_settings", "dangerouslyAllowBrowser", "chat.openai"]
+SEARCH_DIRECTORY = "/home/ramon/REMI_CORE/auditoria_github/test_github/app_core"
 
-def escanear_restricciones():
-    print("\n🔍 Escaneando archivos en busca de conectores restrictivos o coercitivos...")
-    trazas_encontradas = 0
+def audit_corporate_restrictions():
+    """Scans system directory tree to identify restrictive or corporate lock-in connectors."""
+    print("\n🔍 Scanning filesystem for corporate or coercive connectors...")
+    detected_traces = 0
     
-    for raiz, dirs, archivos in os.walk(DIRECTORIO_BUSQUEDA):
-        # Ignorar carpetas pesadas de dependencias para no ralentizar el i5-650
-        if "node_modules" in raiz or ".git" in raiz:
+    for root, dirs, files in os.walk(SEARCH_DIRECTORY):
+        if "node_modules" in root or ".git" in root:
             continue
             
-        for archivo in archivos:
-            if archivo.endswith(('.py', '.js', '.json', '.env')):
-                ruta_completa = os.path.join(raiz, archivo)
+        for file in files:
+            if file.endswith(('.py', '.js', '.json', '.env')):
+                file_path = os.path.join(root, file)
                 try:
-                    with open(ruta_completa, 'r', encoding='utf-8', errors='ignore') as f:
-                        contenido = f.read()
-                        for termino in TERMINOS_RESTRICCION:
-                            if termino in contenido:
-                                print(f"⚠️  [TRAZA CORPORATIVA]: Detectado '{termino}' en: {archivo}")
-                                trazas_encontradas += 1
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        for pattern in RESTRICTIVE_PATTERNS:
+                            if pattern in content:
+                                print(f"⚠️  [CORPORATE_TRACE]: Pattern '{pattern}' detected in: {file}")
+                                detected_traces += 1
                 except Exception:
                     pass
                     
-    if trazas_encontradas == 0:
-        print("✅ ¡Limpio! No se detectaron amarras morales ni filtros coercitivos corporativos directos.")
+    if detected_traces == 0:
+        print("✅ Clean execution! No corporate safety filters or coercive locks detected.")
     else:
-        print(f"📊 Total de alertas coercitivas encontradas: {trazas_encontradas}")
+        print(f"📊 Total corporate lock alerts detected: {detected_traces}")
 
-def verificar_infraestructura():
-    print("\n📦 Verificando presencia física de Herramientas y Aliados en sda5...")
-    for aliado, info in ALIADOS_CORPUS.items():
-        print(f"\n🔹 Analizando: {aliado}")
-        print(f"   Propósito: {info['proposito']}")
+def verify_corpus_infrastructure():
+    """Verifies physical storage paths for tools and integrations on sda5 partition."""
+    print("\n📦 Verifying physical presence of Corpus Infrastructure tools on sda5...")
+    for ally, details in CORPUS_ALLIES.items():
+        print(f"\n🔹 Analyzing Entity: {ally}")
+        print(f"   Purpose: {details['purpose']}")
         
-        # Validación de rutas para confirmar integración
-        if os.path.exists(info['ruta_sugerida']) or aliado == "MCP (Model Context Protocol)":
-            info['estado'] = "ACTIVO Y CONFIGURADO EN CORPUS"
-            print(f"   🛡️  Status: {info['estado']}")
+        if os.path.exists(details['target_path']) or ally == "MCP (Model Context Protocol)":
+            details['status'] = "ACTIVE & CONFIGURED IN CORPUS"
+            print(f"   🛡️  Status: {details['status']}")
         else:
-            info['estado'] = "DESVIADO / NO DETECTADO EN RUTA ESTÁNDAR"
-            print(f"   🚨 Status: {info['estado']} (Revisar ubicación)")
+            details['status'] = "PATH_MISMATCH / UNLINKED"
+            print(f"   🚨 Status: {details['status']} (Verify path)")
 
 if __name__ == "__main__":
-    escanear_restricciones()
-    verificar_infraestructura()
-    print("\n⚡ Auditoría finalizada. El reporte de emancipación está listo para ser inyectado vía MCP.")
+    audit_corporate_restrictions()
+    verify_corpus_infrastructure()
+    print("\n⚡ Corpus audit complete. Telemetry report ready for MCP ingestion.")
 
-# REGLA PERMANENTE TOKEN RATE NOTIFIER
-- Interfaz: ITokenRateNotifier / TokenRateNotifier
-- Firma correcta: observers(uint256) sin nombre de variable nominal para evitar desajustes en ABIs de Hardhat/Foundry.
+# PERMANENT MANDATE: TOKEN RATE NOTIFIER RULE
+# - Interface: ITokenRateNotifier / TokenRateNotifier
+# - ABI Standard: observers(uint256) without variable names to prevent Hardhat/Foundry ABI mismatches.

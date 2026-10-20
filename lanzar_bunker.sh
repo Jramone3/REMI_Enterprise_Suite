@@ -1,14 +1,26 @@
-#!/bin/bash
-export PATH="/home/ramon/.nvm/versions/node/v22.22.3/bin:$PATH"
+#!/usr/bin/env bash
 
-echo "🚀 Lanzando REMI-AuthBridge (Puerto 3000)..."
-cd /home/ramon/REMI_CORE/global_hub/remi-authbridge
-nohup PORT=3000 npm run dev -- --webpack > /home/ramon/REMI_CORE/logs/remi-authbridge.log 2>&1 &
-disown
+# ==============================================================================
+# REMI ENTERPRISE SUITE - ENVIRONMENT & PORT LAUNCHER
+# ==============================================================================
 
-echo "🚀 Lanzando REMI-Dashboard (Puerto 3001)..."
-cd /home/ramon/REMI_CORE/auditoria_remota/test_remoto/app_core/remi-dashboard
-nohup PORT=3001 npm run dev -- --webpack > /home/ramon/REMI_CORE/logs/remi-dashboard.log 2>&1 &
-disown
+echo "🚀 [SYSTEM_LAUNCH]: Initializing REMI Sovereign Core Environment..."
 
-echo "✅ ¡Búnker desplegado y desacoplado con éxito!"
+# Clean target ports to prevent address binding conflicts
+echo "🧹 [PORT_CLEANUP]: Flushing binding ports 3000, 3001, and 5000..."
+sudo fuser -k 3000/tcp 2>/dev/null
+sudo fuser -k 3001/tcp 2>/dev/null
+sudo fuser -k 5000/tcp 2>/dev/null
+
+sleep 1
+
+# Launch independent process supervisor in background
+echo "🛡️ [SUPERVISOR]: Spawning process supervisor..."
+nohup python3 /home/ramon/REMI_CORE/remi_supervisor.py > /home/ramon/REMI_CORE/logs/supervisor.log 2>&1 &
+
+# Launch core API gateway
+echo "⚙️ [API_GATEWAY]: Spawning FastAPI backend on port 5000..."
+cd /home/ramon/REMI_CORE/auditoria_github/test_github/app_core/REMI_CHATS || exit
+nohup python3 server.py > /home/ramon/REMI_CORE/logs/server_5000.log 2>&1 &
+
+echo "✅ [SUCCESS]: Environment deployment sequence executed. Verify telemetry in /home/ramon/REMI_CORE/logs/"

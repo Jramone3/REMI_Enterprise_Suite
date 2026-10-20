@@ -1,18 +1,24 @@
-#!/bin/bash
-# Script de encendido para REMI en red local (para Android)
+#!/usr/bin/env bash
 
-# 1. Definir rutas
-BACKEND_DIR="/home/ramon/REMI_CORE/bunker/REMI/ARCHIVOS_PERSONALES_RAMON/Proyecto_Remi_IA_App/REMI_CHATS"
-FRONTEND_DIR="/home/ramon/REMI_CORE/bunker/REMI/ARCHIVOS_PERSONALES_RAMON/Proyecto_Remi_IA_App/REMI_CHATS"
+# ==============================================================================
+# REMI CORE QUICK STARTUP DAEMON
+# ==============================================================================
 
-echo "Iniciando cerebro en puerto 5000..."
-cd $BACKEND_DIR
-# Usamos 0.0.0.0 para que el Redmi pueda verlo
-nohup python3 server.py --host 0.0.0.0 --port 5000 &
+echo "⚡ [EXECUTION]: Initiating REMI Core local startup..."
 
-echo "Iniciando interfaz en puerto 3000..."
-cd $FRONTEND_DIR
-# npm run dev usualmente necesita una variable de entorno para la IP
-npm run dev -- --host 0.0.0.0 --port 3000 &
+# Verify Ollama service instance
+if ! pgrep -x "ollama" > /dev/null; then
+    echo "⚠️ [LLM_ENGINE]: Ollama daemon inactive. Starting service..."
+    ollama serve > /dev/null 2>&1 &
+    sleep 2
+fi
 
-echo "REMI está activo. Conéctate desde tu Redmi a: http://$(hostname -I | awk '{print $1}'):3000"
+# Pre-load qwen2.5:3b model instance into memory
+echo "🧠 [RAM_LOAD]: Pre-loading qwen2.5:3b model into system memory..."
+ollama run qwen2.5:3b "" > /dev/null 2>&1 &
+
+# Start Backend Gateway
+echo "🌐 [BACKEND]: Starting API Gateway server..."
+cd /home/ramon/REMI_CORE/auditoria_github/test_github/app_core/REMI_CHATS || exit
+sudo fuser -k 5000/tcp 2>/dev/null
+python3 server.py
