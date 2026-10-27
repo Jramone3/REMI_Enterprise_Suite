@@ -1,0 +1,1 @@
+/home/ramon/REMI_CORE/bunker/AUDITORIAS_EXTERNAS/quantus_target/poCs_locales/remi_poc_quantus/target/release/remi_poc_quantus: /home/ramon/REMI_CORE/bunker/AUDITORIAS_EXTERNAS/quantus_target/poCs_locales/remi_poc_quantus/src/main.rs

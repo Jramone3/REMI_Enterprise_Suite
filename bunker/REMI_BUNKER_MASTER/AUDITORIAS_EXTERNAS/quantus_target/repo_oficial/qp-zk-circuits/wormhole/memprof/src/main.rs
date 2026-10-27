@@ -1,0 +1,295 @@
+//! Single-shot peak-memory profiler for the wormhole proof + aggregation
+//! pipeline.
+//!
+//! Runs the pipeline ONCE in a fresh process while a background thread samples
+//! resident memory, then prints a phase-by-phase peak-memory report. Use this
+//! to compare circuit configurations, runtime tuning (rayon thread count,
+//! batch sizes), and allocator behavior without firing up a full client.
+//!
+//! Pipeline phases:
+//!   1. build leaf circuit (once)
+//!   2. generate N leaf proofs sequentially (or skip & use dummies)
+//!   3. build the private-batch aggregation circuit
+//!   4. commit + prove the aggregation
+//!
+//! See `README.md` for usage examples.
+
+mod config;
+mod memory;
+mod report;
+mod workload;
+
+use anyhow::Result;
+use clap::Parser;
+use wormhole_aggregator::validate_proof_count;
+
+use crate::config::{default_agg_config, default_leaf_config, print_config_summary, AggConfigArgs};
+use crate::report::PhaseReport;
+
+#[derive(Parser, Debug)]
+#[command(
+    name = "wormhole-memprof",
+    about = "Peak-memory profiler for wormhole proof + aggregation"
+)]
+struct Args {
+    /// Number of leaf proofs the aggregation circuit is built for. Matches
+    /// the on-chain verifier's expected batch size.
+    #[arg(long, default_value_t = 7)]
+    num_leaf_proofs: usize,
+
+    /// How many real leaf proofs to actually generate before aggregation.
+    /// Must be <= num_leaf_proofs. The aggregator pads the rest with dummy
+    /// proofs.
+    #[arg(long)]
+    real_proofs: Option<usize>,
+
+    /// Limit the rayon thread pool. `1` = single-threaded; `0` = system
+    /// default. Useful for comparing parallel vs serial allocation patterns.
+    /// Capped at the host's available parallelism: this flag only ever
+    /// shrinks the pool, never grows it.
+    #[arg(long, default_value_t = 0, value_parser = parse_rayon_threads)]
+    rayon_threads: usize,
+
+    /// Skip leaf-proof generation entirely (use cloned dummy proof). Isolates
+    /// the cost of the aggregation step alone.
+    #[arg(long, default_value_t = false)]
+    skip_leaf_gen: bool,
+
+    /// Only build the aggregation circuit, don't prove anything. Reports the
+    /// cost of the circuit data structure itself.
+    #[arg(long, default_value_t = false)]
+    circuit_only: bool,
+
+    /// Stop after leaf-proof generation; never touch the aggregator. Reports
+    /// the memory requirement of the leaf-proving side alone (circuit build +
+    /// proof generation). Conflicts with --skip-leaf-gen (nothing to measure)
+    /// and --circuit-only (which measures the aggregation circuit instead).
+    #[arg(long, default_value_t = false, conflicts_with_all = ["skip_leaf_gen", "circuit_only"])]
+    leaf_only: bool,
+
+    /// Call malloc_zone_pressure_relief between phases (Apple only).
+    #[arg(long, default_value_t = false)]
+    release_after_each: bool,
+
+    /// Memory sampler poll period in milliseconds. Bounded at parse time:
+    /// `0` would busy-loop the sampler thread, and an oversized period is
+    /// useless for profiling (the poll wait itself is interruptible, so
+    /// shutdown never blocks on it either way).
+    #[arg(long, default_value_t = 25,
+          value_parser = clap::value_parser!(u64).range(1..=crate::memory::MAX_SAMPLE_PERIOD_MS))]
+    sample_period_ms: u64,
+
+    /// If set, exits non-zero when overall peak exceeds this MB. CI guard.
+    #[arg(long)]
+    peak_target_mb: Option<u64>,
+
+    #[command(flatten)]
+    agg_cfg: AggConfigArgs,
+}
+
+/// Upper bound for `--rayon-threads`: the host's available parallelism.
+fn max_rayon_threads() -> usize {
+    std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
+}
+
+/// Value parser for `--rayon-threads`. The flag exists to LIMIT the rayon
+/// pool below the system default; a value above the host's available
+/// parallelism has no profiling use and would only force the process to
+/// spawn that many OS threads (`build_global` creates them eagerly), so it
+/// is rejected before any thread-pool setup or circuit work.
+fn parse_rayon_threads(s: &str) -> Result<usize, String> {
+    let n: usize = s
+        .parse()
+        .map_err(|_| format!("'{s}' is not a valid number"))?;
+    let max = max_rayon_threads();
+    if n > max {
+        return Err(format!(
+            "value must be at most the host's available parallelism ({max}); \
+             use 0 for the system default"
+        ));
+    }
+    Ok(n)
+}
+
+fn validate_workload_counts(num_leaf_proofs: usize, real_proofs: usize) -> Result<()> {
+    validate_proof_count(num_leaf_proofs, "num_leaf_proofs")?;
+    if real_proofs > num_leaf_proofs {
+        anyhow::bail!(
+            "--real-proofs ({}) must be <= --num-leaf-proofs ({})",
+            real_proofs,
+            num_leaf_proofs
+        );
+    }
+    Ok(())
+}
+
+fn main() -> Result<()> {
+    let args = Args::parse();
+    eprintln!("wormhole-memprof: args = {:#?}", args);
+
+    if let Err(msg) = args.agg_cfg.validate() {
+        eprintln!("ERROR: {}", msg);
+        std::process::exit(2);
+    }
+
+    let agg_cfg = if args.agg_cfg.is_default() {
+        default_agg_config()
+    } else {
+        args.agg_cfg.build()
+    };
+    let leaf_cfg = default_leaf_config();
+    print_config_summary("leaf", &leaf_cfg);
+    print_config_summary("agg", &agg_cfg);
+
+    let num_leaf_proofs = args.num_leaf_proofs;
+    let real_proofs = args.real_proofs.unwrap_or(num_leaf_proofs);
+    // Bound the circuit dimension before construction while permitting an
+    // all-dummy profiling run (`real_proofs == 0`). Validated before the
+    // thread-pool setup so a rejected workload never spawns worker threads.
+    validate_workload_counts(num_leaf_proofs, real_proofs)?;
+
+    if args.rayon_threads > 0 {
+        eprintln!("Configuring rayon with {} threads", args.rayon_threads);
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(args.rayon_threads)
+            .build_global()
+            .map_err(|e| {
+                anyhow::anyhow!(
+                    "failed to configure rayon thread pool with {} threads: {e}",
+                    args.rayon_threads
+                )
+            })?;
+    }
+
+    let mut report = PhaseReport::new(args.sample_period_ms)?;
+
+    let leaf_ctx = workload::build_leaf_context(leaf_cfg.clone(), &mut report)?;
+    if args.release_after_each {
+        report.release_memory("after_build_leaf_circuit")?;
+    }
+
+    if args.circuit_only {
+        workload::build_agg_circuit_only(&leaf_ctx, num_leaf_proofs, agg_cfg, &mut report)?;
+        report.finish_and_print(args.peak_target_mb)?;
+        return Ok(());
+    }
+
+    let mut leaf_proofs = Vec::with_capacity(real_proofs);
+    if args.skip_leaf_gen {
+        eprintln!(
+            "Skipping leaf-proof generation; cloning dummy proof {} times",
+            real_proofs
+        );
+        for _ in 0..real_proofs {
+            leaf_proofs.push(leaf_ctx.dummy_proof.clone());
+        }
+    } else {
+        for i in 0..real_proofs {
+            let p =
+                workload::generate_leaf_proof(&leaf_ctx, i, args.release_after_each, &mut report)?;
+            leaf_proofs.push(p);
+        }
+    }
+
+    if args.leaf_only {
+        report.finish_and_print(args.peak_target_mb)?;
+        return Ok(());
+    }
+
+    let _agg = workload::aggregate_fresh(
+        &leaf_ctx,
+        leaf_proofs,
+        num_leaf_proofs,
+        agg_cfg,
+        args.release_after_each,
+        &mut report,
+    )?;
+
+    report.finish_and_print(args.peak_target_mb)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{validate_workload_counts, Args};
+    use clap::Parser;
+
+    /// `--rayon-threads` exists to LIMIT the pool; values beyond the host's
+    /// available parallelism have no legitimate use and only serve to exhaust
+    /// OS threads, so they must be rejected at argument-parse time.
+    #[test]
+    fn rayon_threads_beyond_available_parallelism_is_rejected_at_parse_time() {
+        let err = Args::try_parse_from(["wormhole-memprof", "--rayon-threads", "1000000"]);
+        assert!(
+            err.is_err(),
+            "an absurd --rayon-threads value must be rejected before any thread creation"
+        );
+
+        let max = super::max_rayon_threads();
+        let just_over = (max + 1).to_string();
+        assert!(
+            Args::try_parse_from(["wormhole-memprof", "--rayon-threads", &just_over]).is_err(),
+            "values above available parallelism ({max}) must be rejected"
+        );
+    }
+
+    #[test]
+    fn rayon_threads_within_capacity_is_accepted() {
+        let max = super::max_rayon_threads().to_string();
+        for value in ["0", "1", &max] {
+            assert!(
+                Args::try_parse_from(["wormhole-memprof", "--rayon-threads", value]).is_ok(),
+                "--rayon-threads {value} must be accepted"
+            );
+        }
+    }
+
+    /// `--sample-period-ms 0` turns the sampler thread into a busy loop on
+    /// the process-memory read, and an absurdly large period parks the thread
+    /// in a sleep that shutdown must wait out; both must be rejected at
+    /// argument-parse time (audit finding: unbounded sampler interval).
+    #[test]
+    fn sample_period_out_of_range_is_rejected_at_parse_time() {
+        for value in ["0", "86400000"] {
+            assert!(
+                Args::try_parse_from(["wormhole-memprof", "--sample-period-ms", value]).is_err(),
+                "--sample-period-ms {value} must be rejected at parse time"
+            );
+        }
+        let max = crate::memory::MAX_SAMPLE_PERIOD_MS.to_string();
+        for value in ["1", "25", &max] {
+            assert!(
+                Args::try_parse_from(["wormhole-memprof", "--sample-period-ms", value]).is_ok(),
+                "--sample-period-ms {value} must be accepted"
+            );
+        }
+    }
+
+    /// `--leaf-only` measures leaf proving, so combining it with flags that
+    /// skip leaf proving (`--skip-leaf-gen`) or measure the aggregation
+    /// circuit instead (`--circuit-only`) is contradictory and must be
+    /// rejected at parse time.
+    #[test]
+    fn leaf_only_conflicting_flags_are_rejected_at_parse_time() {
+        assert!(Args::try_parse_from(["wormhole-memprof", "--leaf-only"]).is_ok());
+        for conflicting in ["--skip-leaf-gen", "--circuit-only"] {
+            assert!(
+                Args::try_parse_from(["wormhole-memprof", "--leaf-only", conflicting]).is_err(),
+                "--leaf-only combined with {conflicting} must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn zero_real_proofs_is_valid_for_all_dummy_profile() {
+        validate_workload_counts(7, 0).unwrap();
+    }
+
+    #[test]
+    fn invalid_circuit_dimension_or_real_count_is_rejected() {
+        assert!(validate_workload_counts(0, 0).is_err());
+        assert!(validate_workload_counts(7, 8).is_err());
+    }
+}

@@ -1,0 +1,1 @@
+/home/ramon/REMI_CORE/core/arranque_remi_mañana.sh
