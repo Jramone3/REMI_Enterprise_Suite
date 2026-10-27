@@ -1,16 +1,21 @@
-import streamlit as st
+import sys
 import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(current_dir, '..'))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+import streamlit as st
 import datetime
+import requests
 from pymongo import MongoClient
-import google.generativeai as genai
 from web3 import Web3
 from dotenv import load_dotenv
+from core.context_engine import get_remi_environmental_context
 
 st.set_page_config(page_title="REMI Enterprise Suite", page_icon="🤖", layout="wide")
 
-# ==============================================================================
-# CONFIGURACIÓN Y METADATOS FISCALES - SENIAT (VENEZUELA)
-# ==============================================================================
 EMISOR_FISCAL = {
     "contribuyente": "Jesús Ramón Rivas García",
     "rif": "V050153998",
@@ -20,7 +25,6 @@ EMISOR_FISCAL = {
     "red": "Base Network (ChainID: 8453)"
 }
 
-# Configuración Web3 para Base Network
 BASE_RPC_URL = "https://mainnet.base.org"
 w3_base = Web3(Web3.HTTPProvider(BASE_RPC_URL))
 
@@ -50,24 +54,24 @@ Estado de Pago    : VERIFICADO ON-CHAIN 🟢
 --------------------------------------------------------------------------------
 🏛️ EMISOR (PROVEEDOR DEL SOFTWARE)
 --------------------------------------------------------------------------------
-• Contribuyente   : {EMISOR_FISCAL['contribuyente']}
-• RIF             : {EMISOR_FISCAL['rif']}
-• Domicilio Fiscal: {EMISOR_FISCAL['domicilio']}
-• Billetera PC    : {EMISOR_FISCAL['wallet_oficial']} ({EMISOR_FISCAL['red']})
+- Contribuyente   : {EMISOR_FISCAL['contribuyente']}
+- RIF             : {EMISOR_FISCAL['rif']}
+- Domicilio Fiscal: {EMISOR_FISCAL['domicilio']}
+- Billetera PC    : {EMISOR_FISCAL['wallet_oficial']} ({EMISOR_FISCAL['red']})
 
 --------------------------------------------------------------------------------
 👤 RECEPTOR (ADQUIRENTE DE LA LICENCIA)
 --------------------------------------------------------------------------------
-• Cliente / Razón Social: {cliente_empresa}
-• Correo Electrónico    : {cliente_email}
+- Cliente / Razón Social: {cliente_empresa}
+- Correo Electrónico    : {cliente_email}
 
 --------------------------------------------------------------------------------
 📦 DETALLE DE LA TRANSACCIÓN
 --------------------------------------------------------------------------------
-• Producto         : Licencia REMI Enterprise Suite v1.0.0
-• Serial Licencia  : {num_licencia}
-• Monto Total      : ${monto_usd}.00 USD
-• Hash Transacción : {tx_hash}
+- Producto         : Licencia REMI Enterprise Suite v1.0.0
+- Serial Licencia  : {num_licencia}
+- Monto Total      : ${monto_usd}.00 USD
+- Hash Transacción : {tx_hash}
 
 --------------------------------------------------------------------------------
 Transparencia Fiscal SENIAT - Venezuela | Registro en Búnker MongoDB Atlas
@@ -75,29 +79,30 @@ Transparencia Fiscal SENIAT - Venezuela | Registro en Búnker MongoDB Atlas
 """
     return factura_text, num_factura
 
-# ==========================================
-# 1. VALIDACIÓN PROFUNDA DE GEMINI AL INICIO
-# ==========================================
-# Cargar variables de entorno desde el archivo .env local
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
-gemini_ready = False
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "remi-enterprise:latest")
 
-if not API_KEY:
-    st.sidebar.error("⚠️ Advertencia: GEMINI_API_KEY no está configurada en el entorno.")
-else:
-    try:
-        genai.configure(api_key=API_KEY)
-        model_test = genai.GenerativeModel("gemini-2.5-flash")
-        st.sidebar.success("✅ Gemini Flash conectado y validado")
-        gemini_ready = True
-    except Exception as e:
-        st.sidebar.error(f"❌ Error al validar la API Key de Gemini: {e}")
+ollama_ready = False
 
-# Verificación estricta de seguridad para el Búnker
+try:
+    check_resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+    if check_resp.status_code == 200:
+        models_available = [m["name"] for m in check_resp.json().get("models", [])]
+        if OLLAMA_MODEL in models_available:
+            st.sidebar.success(f"✅ Ollama Local Activo (`{OLLAMA_MODEL}`)")
+            ollama_ready = True
+        else:
+            st.sidebar.warning(f"⚠️ `{OLLAMA_MODEL}` no hallado, pero Ollama responde.")
+            ollama_ready = True
+    else:
+        st.sidebar.error("❌ Ollama Local no responde en puerto 11434")
+except Exception as e:
+    st.sidebar.error(f"❌ Error conectando a Ollama Local: {e}")
+
 if not MONGO_URI:
-    st.error("🔴 **ERROR CRÍTICO DE SEGURIDAD Y CONFIGURACIÓN:** La variable de entorno `MONGO_URI` no está definida. El acceso al Búnker está bloqueado por diseño.")
+    st.error("🔴 **ERROR CRÍTICO DE SEGURIDAD:** La variable `MONGO_URI` no está definida. Acceso al Búnker bloqueado.")
     st.stop()
 
 st.title("🤖 REMI Enterprise Suite - Centro de Comando")
@@ -107,9 +112,6 @@ selected_tab = st.sidebar.radio(
     ["💬 Chat Principal", "🔑 Adquirir Licencia Enterprise", "🛡️ Registro de Licencias (Admin)"]
 )
 
-# ==========================================
-# 2. CHAT PRINCIPAL CON GEMINI
-# ==========================================
 if selected_tab == "💬 Chat Principal":
     st.header("Centro de Inteligencia - REMI Core")
     
@@ -126,26 +128,39 @@ if selected_tab == "💬 Chat Principal":
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("REMI ejecutando auditoría y análisis de sistema..."):
+            with st.spinner("REMI ejecutando auditoría y análisis local..."):
                 respuesta_ia = ""
-                if not gemini_ready:
-                    respuesta_ia = "❌ Error: La API Key de Gemini no está activa o configurada correctamente."
+                if not ollama_ready:
+                    respuesta_ia = "❌ Error: El motor local Ollama no está disponible en http://localhost:11434."
                 else:
                     try:
-                        model = genai.GenerativeModel("gemini-2.5-flash")
-                        sys_prompt = "Eres REMI, núcleo de inteligencia artificial de REMI Enterprise Suite, desarrollado por jramonrivasg. Responde con tono técnico, profesional y analítico."
-                        user_content = f"System: {sys_prompt}\n\nUser: {prompt}"
-                        res = model.generate_content(user_content)
-                        respuesta_ia = res.text
+                        env_context = get_remi_environmental_context()
+                        full_prompt = (
+                            f"{env_context}\n\n"
+                            "Instrucciones: Eres REMI, el núcleo de inteligencia artificial autónomo de REMI Enterprise Suite, "
+                            "desarrollado por jramonrivasg. Responde con tono técnico, profesional, ágil y soberano. "
+                            "Aprovecha siempre la información de la matriz ambiental anterior cuando se te consulte sobre tiempo o ubicación.\n\n"
+                            f"Usuario: {prompt}\n"
+                            "REMI:"
+                        )
+
+                        payload = {
+                            "model": OLLAMA_MODEL,
+                            "prompt": full_prompt,
+                            "stream": False
+                        }
+
+                        res = requests.post(f"{OLLAMA_URL}/api/generate", json=payload, timeout=90)
+                        if res.status_code == 200:
+                            respuesta_ia = res.json().get("response", "").strip()
+                        else:
+                            respuesta_ia = f"❌ Error en respuesta de Ollama (Status {res.status_code}): {res.text}"
                     except Exception as e:
-                        respuesta_ia = f"❌ Error en llamada a Gemini: {e}"
+                        respuesta_ia = f"❌ Error en llamada a Ollama: {e}"
                 
             st.markdown(respuesta_ia)
         st.session_state.messages.append({"role": "assistant", "content": respuesta_ia})
 
-# ==========================================
-# 3. CONSULTA DIRECTA AL BÚNKER MONGODB & FACTURA SENIAT
-# ==========================================
 elif selected_tab == "🔑 Adquirir Licencia Enterprise":
     st.header("🛡️ Centro de Control - Búnker MongoDB & Licenciamiento")
     st.write("Consulta y verificación profunda directa contra las colecciones del Búnker en MongoDB Atlas con respaldo fiscal SENIAT.")
@@ -181,7 +196,6 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
                             license_hash_val = record.get('license_hash', record.get('license', 'REMI-ENT-SECURE-2026'))
                             st.info(f"🔑 **Hash de Licencia Activa:** `{license_hash_val}`")
                             
-                            # Generación automática del comprobante fiscal SENIAT
                             factura_txt, num_factura = generar_factura_digital(
                                 cliente_email=email_input,
                                 cliente_empresa=record.get("client_name", "Cliente Enterprise"),
@@ -222,14 +236,10 @@ elif selected_tab == "🔑 Adquirir Licencia Enterprise":
         else:
             st.warning("Por favor ingresa un correo electrónico para realizar la consulta.")
 
-# ==========================================
-# 4. GESTIÓN ADMINISTRATIVA DE LICENCIAS (ADMIN BÚNKER & GAS MONITOR)
-# ==========================================
 elif selected_tab == "🛡️ Registro de Licencias (Admin)":
     st.header("🛡️ Panel Administrador - Generación de Licencias & Búnker On-Chain")
     st.write("Monitorea la infraestructura de red, saldo de gas y registra licencias directamente en el Búnker MongoDB Atlas.")
 
-    # Widget de Monitoreo de Gas en Tiempo Real (Base Network)
     st.subheader("📊 Monitor de Infraestructura y Gas (Base Mainnet)")
     saldo_gas, estado_red = obtener_saldo_gas_bunker()
     
@@ -242,7 +252,7 @@ elif selected_tab == "🛡️ Registro de Licencias (Admin)":
     st.subheader("⚡ Protocolo de Autogestión de Gas (Cliente On-Chain)")
     st.info(
         "💡 **Modo de Gas Descentralizado:** El sistema está preparado para que el cliente ejecute "
-        "la transacción de registro directamente desde su wallet EVM (MetaMask / Rabby), cubriendo él mismo el costo de gas de la red Base."
+        "la transacción de registro directamente desde su wallet EVM, cubriendo él mismo el costo de gas."
     )
 
     with st.expander("📜 Ver Estructura del Contrato Inteligente Inmutable (Solidity)"):
@@ -261,7 +271,6 @@ contract RemiBunkerLicense {
     }
 
     function acquireLicense() external payable {
-        // El cliente paga su propio gas y ejecuta la activación on-chain
         authorizedLicenses[msg.sender] = true;
         emit LicenseGranted(msg.sender, block.timestamp);
     }

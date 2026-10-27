@@ -1,0 +1,9 @@
+{
+    "invoice_id": "REMI-INV-20261026214128",
+    "suite": "Remi Enterprise Suite",
+    "service": "REMI-C Low-Level Security Audit",
+    "amount": 150.0,
+    "currency": "USDC / FIAT Gateway",
+    "gateway_status": "READY_FOR_COLLECTION",
+    "timestamp": "2026-10-26 21:41:28"
+}

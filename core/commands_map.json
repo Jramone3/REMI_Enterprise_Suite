@@ -1,0 +1,26 @@
+{
+  "prefix": "/",
+  "commands": {
+    "skill": "Manejo, listado, búsqueda y acoplamiento dinámico de habilidades locales.",
+    "audit": "Ejecución de protocolos de seguridad y revisión de código estático (remi_c_auditor.py).",
+    "gateway": "Control y enrutamiento de solicitudes a través de remi_token_gateway.py.",
+    "model": "Gestión y alternancia de pesos locales entre qwen2.5:3b y remi:3b.",
+    "status": "Diagnóstico rápido y completo de servicios, puertos y particiones del sistema.",
+    "bunker": "Gestión de respaldos, sincronización y protección en el búnker de almacenamiento.",
+    "logs": "Monitoreo y consulta de los registros de supervisión y del núcleo.",
+    "exec": "Ejecución controlada de scripts o pruebas dentro del entorno de desarrollo.",
+    "monetize": "Análisis proactivo de activos del repositorio para identificar vectores de monetización y generación de recursos.",
+    "repl": "Abre una sesión interactiva continua dentro del orquestador."
+  },
+  "subcommands": {
+    "skill": ["load", "list", "find", "remove"],
+    "audit": ["code", "verify", "security", "lfi", "contract"],
+    "gateway": ["start", "stop", "status", "test"],
+    "model": ["switch", "list", "info"],
+    "status": ["system", "storage", "memory", "all"],
+    "bunker": ["sync", "backup", "restore", "status"],
+    "logs": ["view", "tail", "supervisor", "clear"],
+    "exec": ["script", "test", "sandbox"],
+    "monetize": ["scan", "strategy", "services", "grants", "report"]
+  }
+}
