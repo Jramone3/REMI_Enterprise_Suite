@@ -1,0 +1,1 @@
+{"nodes": [{"id": "core_contracts_compilers", "label": "Compiler Versions Documentation", "file_type": "document", "source_file": "bunker_respaldo/REMI_BUNKER_MASTER/core/contracts/COMPILERS.md", "rationale": "Explains the use of specific solc versions (0.4.24, 0.6.12, 0.8.25) for Lido contracts.", "_origin": "semantic"}], "edges": [], "hyperedges": []}

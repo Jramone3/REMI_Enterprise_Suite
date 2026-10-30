@@ -1,0 +1,1 @@
+{"nodes": [{"id": "operaciones_mongo_mapa_atlas", "label": "REMI CORE - OPERACIONES MONGODB ATLAS", "file_type": "document", "source_file": "operaciones_mongo/mapa_atlas.txt", "rationale": "Master log and infrastructure map for MongoDB Atlas operations.", "_origin": "semantic"}], "edges": [], "hyperedges": []}

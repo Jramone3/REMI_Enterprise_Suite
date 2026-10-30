@@ -1,0 +1,1 @@
+{"nodes": [{"id": "docs_zk_trie_architecture_md", "label": "ZK Trie Architecture", "file_type": "document", "source_file": "bunker_respaldo/REMI_BUNKER_MASTER/AUDITORIAS_EXTERNAS/quantus_target/repo_oficial/chain/docs/zk-trie-architecture.md", "rationale": "Explains the Poseidon Merkle tree used for zero-knowledge transfer proofs."}], "edges": [], "hyperedges": []}

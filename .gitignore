@@ -1,26 +1,23 @@
-# Logs y temporales
-*.log
-logs/
-bitacora_remi.txt
-.DS_Store
-
-# Entornos y dependencias locales
-node_modules/
-venv/
+# Entornos y dependencias
 __pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+
+# Configuración y Secretos
 .env
+*.env
+*.pem
+*.key
 
-# Archivos pesados o respaldos anteriores
-graphify-out/
-bunker_respaldo/
-auditoria_remota/
-*.node
-*.onnx
-*.mp3
-*.bin
-*.tar.gz
-*.tgz
+# Modelos pesados y binarios locales (se quedan en tu disco local sda7 / bunker)
+*.gguf
+modelos/*.gguf
+motores/bin/
+bunker/
 
-auditoria_github/
-tests/
-
+# Logs y reportes temporales
+*.log
+reports_analytics/*.json
+!reports_analytics/AUDITOR_SERVICE_MANIFEST.json.example
