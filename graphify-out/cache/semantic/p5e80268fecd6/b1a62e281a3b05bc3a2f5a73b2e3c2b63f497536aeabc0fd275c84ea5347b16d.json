@@ -1,1 +1,0 @@
-{"nodes": [{"id": "cobalt_docker_compose", "label": "Cobalt Docker Compose", "file_type": "code", "source_file": "bunker_respaldo/REMI_BUNKER_MASTER/cobalt/docker-compose.yml", "rationale": "Defines the cobalt service using ghcr.io/imputnet/cobalt:latest.", "_origin": "semantic"}], "edges": [], "hyperedges": []}

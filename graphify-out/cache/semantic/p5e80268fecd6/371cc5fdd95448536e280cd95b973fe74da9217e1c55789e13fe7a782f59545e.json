@@ -1,1 +1,0 @@
-{"nodes": [{"id": "wormhole_threat_model", "label": "Wormhole Threat Model", "file_type": "document", "source_file": "bunker_respaldo/REMI_BUNKER_MASTER/AUDITORIAS_EXTERNAS/quantus_target/repo_oficial/qp-zk-circuits/wormhole/THREAT_MODEL.md", "rationale": "Defines trust boundaries for artifact generation and loading."}], "edges": [], "hyperedges": []}

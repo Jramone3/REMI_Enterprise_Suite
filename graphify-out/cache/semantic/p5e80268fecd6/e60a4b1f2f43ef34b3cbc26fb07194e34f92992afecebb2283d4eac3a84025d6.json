@@ -1,1 +1,0 @@
-{"nodes": [{"id": "core_github_workflows_setup", "label": "Common Setup Action", "file_type": "code", "source_file": "bunker_respaldo/REMI_BUNKER_MASTER/core/.github/workflows/setup/action.yml", "rationale": "Composite action for environment setup (Node, Yarn, Corepack).", "_origin": "semantic"}], "edges": [], "hyperedges": []}

@@ -21,3 +21,4 @@ bunker/
 *.log
 reports_analytics/*.json
 !reports_analytics/AUDITOR_SERVICE_MANIFEST.json.example
+graphify-out/
