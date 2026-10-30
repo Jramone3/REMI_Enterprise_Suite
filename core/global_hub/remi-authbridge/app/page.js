@@ -1,35 +1,108 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-export default function Page() {
-  const [timestamp, setTimestamp] = useState('Sincronizando...');
-  const [isMounted, setIsMounted] = useState(false);
+export default function Home() {
   const [mensaje, setMensaje] = useState('');
-  const [menuDesplegableAbierto, setMenuDesplegableAbierto] = useState(false);
-  const [chatHistorial, setChatHistorial] = useState([
-    { remite: 'remi', texto: 'Saludos, Ramón. Núcleo ceremonial y cognitivo sincronizado. ¿Qué evaluamos hoy?' }
+  const [imagenBase64, setImagenBase64] = useState(null);
+  const [nombreArchivo, setNombreArchivo] = useState('');
+  const [chats, setChats] = useState([
+    { remite: 'remi', texto: 'Saludos, Ramón. Núcleo ceremonial y cognitivo resintonizado. Percepción óptica lista. ¿Qué evaluamos hoy?' }
   ]);
+  const [loading, setLoading] = useState(false);
+
+  // Estados de interfaz y controles de sentidos
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [escuchandoVoz, setEscuchandoVoz] = useState(false);
+  const [modoAudioVega, setModoAudioVega] = useState(true);
+
+  const fileInputRef = useRef(null);
+  const recognitionRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    setTimestamp(now);
-  }, []);
-
+  // Autoscroll del chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistorial]);
+  }, [chats]);
 
-  const enviarMensaje = async (e) => {
-    e.preventDefault();
-    if (!mensaje.trim()) return;
+  // Inicializar Reconocimiento de Voz (Web Speech API)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new SpeechRecognition();
+      rec.lang = 'es-ES';
+      rec.continuous = false;
+      rec.interimResults = false;
 
+      rec.onresult = (e) => {
+        const textoEscuchado = e.results[0][0].transcript;
+        setMensaje((prev) => (prev ? `${prev} ${textoEscuchado}` : textoEscuchado));
+        setEscuchandoVoz(false);
+      };
+
+      rec.onerror = () => setEscuchandoVoz(false);
+      rec.onend = () => setEscuchandoVoz(false);
+
+      recognitionRef.current = rec;
+    }
+  }, []);
+
+  // 1. Manejo de archivo / imagen (Iris) con Preview Visual
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNombreArchivo(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagenBase64(reader.result); // Base64 completo con previsualización
+      };
+      reader.readAsDataURL(file);
+    }
+    setMenuAbierto(false);
+  };
+
+  // 2. Manejo de Micrófono (Voz Entrada)
+  const toggleMic = () => {
+    setMenuAbierto(false);
+    if (!recognitionRef.current) {
+      alert("Tu navegador no soporta reconocimiento de voz nativo.");
+      return;
+    }
+    if (escuchandoVoz) {
+      recognitionRef.current.stop();
+      setEscuchandoVoz(false);
+    } else {
+      setEscuchandoVoz(true);
+      recognitionRef.current.start();
+    }
+  };
+
+  // 3. Manejo de Toggle de Audio (Vega TTS)
+  const toggleEscucharRespuesta = () => {
+    setModoAudioVega(!modoAudioVega);
+    setMenuAbierto(false);
+  };
+
+  // Función de envío principal al servidor del búnker (Puerto 5000)
+  const enviar = async () => {
+    if (!mensaje && !imagenBase64) return;
+    
     const mensajeUsuario = mensaje;
-    const nuevoHistorial = [...chatHistorial, { remite: 'usuario', texto: mensajeUsuario }];
-    setChatHistorial(nuevoHistorial);
+    const base64Payload = imagenBase64;
+    const archivoActual = nombreArchivo;
+
+    // Actualizamos la UI con el mensaje del usuario y miniatura opcional
+    setChats((prev) => [...prev, { 
+      remite: 'usuario', 
+      texto: mensajeUsuario, 
+      imagen: base64Payload,
+      nombreArchivo: archivoActual 
+    }]);
+    
     setMensaje('');
+    setImagenBase64(null);
+    setNombreArchivo('');
+    setLoading(true);
 
     try {
       const res = await fetch('http://localhost:5000/api/remi', {
@@ -39,185 +112,173 @@ export default function Page() {
         },
         body: JSON.stringify({
           message: mensajeUsuario,
-          speak: true,
+          image: base64Payload, // Enviamos el Base64 de la imagen a Iris
+          speak: modoAudioVega,
           lang: 'es'
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const textoRespuesta = data.response_payload || data.message || data.response || data.mensaje || '[REMI Core]: Procesado correctamente.';
-        
-        setChatHistorial(prev => [
-          ...prev,
-          { 
-            remite: 'remi', 
-            texto: textoRespuesta 
-          }
-        ]);
-      } else {
-        setChatHistorial(prev => [
-          ...prev,
-          { 
-            remite: 'remi', 
-            texto: `[REMI Enterprise Core]: Error de comunicación (HTTP ${res.status}).` 
-          }
-        ]);
+      const data = await res.json();
+      const respuestaRemi = data.response || data.message || JSON.stringify(data);
+
+      setChats((prev) => [...prev, { remite: 'remi', texto: respuestaRemi }]);
+
+      // Si hay audio Base64 retornado, lo reproducimos
+      if (data.audio_b64) {
+        const audio = new Audio(`data:audio/wav;base64,${data.audio_b64}`);
+        audio.play().catch(e => console.log("Error de audio:", e));
       }
-    } catch (error) {
-      setChatHistorial(prev => [
-        ...prev,
-        { 
-          remite: 'remi', 
-          texto: `[REMI Local Engine]: Error de red al conectar con el backend.` 
-        }
-      ]);
+    } catch (err) {
+      setChats((prev) => [...prev, { remite: 'remi', texto: `[ERROR DE CONEXIÓN PUERTO 5000]: ${err.message}` }]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isMounted) {
-    return (
-      <main style={{ background: '#07090e', color: '#fff', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'monospace' }}>
-        <h1>Inicializando Núcleo Maestro REMI...</h1>
-      </main>
-    );
-  }
-
   return (
-    <main style={{ fontFamily: 'system-ui, -apple-system, sans-serif', padding: '2rem', maxWidth: '1300px', margin: '0 auto', background: '#07090e', color: '#f3f4f6', minHeight: '100vh' }}>
+    <main style={{ minHeight: '100vh', background: '#060913', color: '#f8fafc', padding: '1.5rem', fontFamily: 'monospace' }}>
       
-      {/* Cabecera Suprema con la Imagen de REMI */}
-      <header style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1f2937', paddingBottom: '1.5rem', marginBottom: '2rem', gap: '1.5rem' }}>
-        <div style={{ flex: '1 1 500px' }}>
-          <h1 style={{ fontSize: '2.5rem', margin: 0, color: '#38bdf8', fontWeight: '900', letterSpacing: '-0.025em' }}>🛡️ REMI AuthBridge – Interfaz Maestra</h1>
-          <p style={{ margin: '0.5rem 0 0 0', color: '#94a3b8', fontSize: '1.1rem' }}>Entorno Unificado de Conciencia Agéntica, Auditoría y Ceremonial</p>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.8rem', fontSize: '0.85rem' }}>
-            <span style={{ background: '#065f46', color: '#6ee7b7', padding: '3px 10px', borderRadius: '6px', fontWeight: '600' }}>🟢 Backend: Puerto 5000</span>
-            <span style={{ background: '#1e3a8a', color: '#93c5fd', padding: '3px 10px', borderRadius: '6px', fontWeight: '600' }}>⚡ Ollama: remi-enterprise</span>
-            <span style={{ background: '#312e81', color: '#c4b5fd', padding: '3px 10px', borderRadius: '6px', fontWeight: '600' }}>🕒 {timestamp}</span>
-          </div>
+      {/* Cabecera Soberana */}
+      <header style={{ marginBottom: '1.5rem', borderBottom: '1px solid #1e293b', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '1.4rem', color: '#38bdf8', margin: 0 }}>🛡️ REMI Enterprise Suite - Centro de Mando Soberano</h1>
+          <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '5px 0 0 0' }}>Nodo activo: Aragua, Venezuela | Iris, Cerebras y Vega sincronizados.</p>
         </div>
-        
-        {/* Imagen Oficial de REMI */}
-        <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '2px solid #0284c7', boxShadow: '0 0 25px rgba(56, 189, 248, 0.3)' }}>
-          <img src="/remi_core_master.png" alt="REMI Core Visual Master" width="220" style={{ display: 'block', background: '#0b0f19' }} />
+        <div style={{ fontSize: '0.8rem', background: '#0f172a', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #38bdf8', color: '#4ade80' }}>
+          ⚡ Estado: Sistema Operativo
         </div>
       </header>
 
-      {/* Grid Principal de Módulos */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '2rem' }}>
+      {/* Grid Principal */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '1.5rem' }}>
         
-        {/* Columna Izquierda: Paneles de Control y Estado */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          <section style={{ background: '#0f172a', padding: '1.5rem', borderRadius: '16px', border: '1px solid #1e293b' }}>
-            <h2 style={{ color: '#38bdf8', fontSize: '1.25rem', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              📊 Tabla y Memoria Patrimonial
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-              <div style={{ background: '#1e293b', padding: '0.8rem 1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Nucleo Capacitor IA</span>
-                <span style={{ color: '#4ade80', fontWeight: 'bold' }}>✅ Activo</span>
-              </div>
-              <div style={{ background: '#1e293b', padding: '0.8rem 1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Archivos Personales (sda7)</span>
-                <span style={{ color: '#4ade80', fontWeight: 'bold' }}>✅ Activo</span>
-              </div>
-              <div style={{ background: '#1e293b', padding: '0.8rem 1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Documentación y AuthBridge</span>
-                <span style={{ color: '#facc15', fontWeight: 'bold' }}>⚠️ Sincronizando</span>
-              </div>
+        {/* Panel Izquierdo: Avatar de Remi (remi_la_bonita.png) y Telemetría */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ background: '#0f172a', padding: '1rem', borderRadius: '12px', border: '1px solid #1e293b', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ color: '#38bdf8', marginBottom: '0.8rem', fontSize: '1rem' }}>👁️ Núcleo Visual & Identidad</h3>
+            <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #334155' }}>
+              <img 
+                src="/remi_la_bonita.png" 
+                alt="REMI Core Avatar" 
+                style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
+              />
             </div>
-          </section>
+            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.6rem' }}>Matriz de Percepción Óptica y Enlace TIGER_DATA activos.</p>
+          </div>
 
-          <section style={{ background: '#0f172a', padding: '1.5rem', borderRadius: '16px', border: '1px solid #1e293b' }}>
-            <h2 style={{ color: '#38bdf8', fontSize: '1.25rem', marginTop: 0 }}>📜 Auditoría y Forks</h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.5' }}>
-              Registro inmutable de decisiones agénticas y bifurcaciones de memoria ceremonial operando en tiempo real bajo directivas de discernimiento.
-            </p>
-            <button 
-              onClick={() => alert("✅ Registro inmutable validado en Postgres y MongoDB")}
-              style={{ marginTop: '1rem', width: '100%', background: '#0284c7', color: '#fff', border: 'none', padding: '0.8rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s' }}
-            >
-              Registrar Token en Base de Datos
-            </button>
-          </section>
-
+          <div style={{ background: '#0f172a', padding: '1.2rem', borderRadius: '12px', border: '1px solid #1e293b' }}>
+            <h3 style={{ color: '#38bdf8', marginBottom: '0.8rem', fontSize: '1rem' }}>⚡ Telemetría del Búnker</h3>
+            <ul style={{ listStyle: 'none', padding: 0, fontSize: '0.85rem', lineHeight: '1.8' }}>
+              <li>🧠 Cerebras (Razonamiento): <strong style={{ color: '#4ade80' }}>Activo</strong></li>
+              <li>👁️ Argus / Iris (Visión): <strong style={{ color: '#4ade80' }}>Activo</strong></li>
+              <li>🔊 Vega (TTS Audio): <strong style={{ color: modoAudioVega ? '#4ade80' : '#f87171' }}>{modoAudioVega ? 'Activo' : 'Silenciado'}</strong></li>
+              <li>📂 Archivos (sda7/sda5): <strong style={{ color: '#4ade80' }}>Activo</strong></li>
+            </ul>
+          </div>
         </div>
 
-        {/* Columna Derecha: El Chat Avanzado de REMI con Interfaz Estilo Asistente */}
-        <section style={{ background: '#0f172a', padding: '1.5rem', borderRadius: '16px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', height: '650px' }}>
-          
-          <h2 style={{ color: '#38bdf8', fontSize: '1.25rem', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #1e293b', paddingBottom: '0.8rem' }}>
-            🧠 Centro Conversacional Cognitivo (REMI)
-          </h2>
+        {/* Panel Derecho: Chat y Sentidos */}
+        <div style={{ background: '#0f172a', padding: '1.2rem', borderRadius: '12px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', height: '680px' }}>
+          <h3 style={{ color: '#38bdf8', marginBottom: '0.8rem', fontSize: '1rem' }}>💬 Canal de Comunicación Directa</h3>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {chatHistorial.map((chat, idx) => (
-              <div key={idx} style={{ 
+          {/* Historial de Chat */}
+          <div style={{ flex: 1, overflowY: 'auto', background: '#020617', padding: '1rem', borderRadius: '8px', marginBottom: '0.8rem', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {chats.map((chat, idx) => (
+              <div key={idx} style={{
                 alignSelf: chat.remite === 'usuario' ? 'flex-end' : 'flex-start',
                 background: chat.remite === 'usuario' ? '#0369a1' : '#1e293b',
                 color: '#f8fafc',
-                padding: '1rem 1.2rem',
-                borderRadius: '12px',
+                padding: '0.9rem 1.1rem',
+                borderRadius: '10px',
                 maxWidth: '85%',
-                lineHeight: '1.6',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                lineHeight: '1.5',
+                fontSize: '0.9rem',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                whiteSpace: 'pre-wrap'
               }}>
-                <strong style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.3rem' }}>
+                <strong style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.2rem' }}>
                   {chat.remite === 'usuario' ? 'RAMÓN' : 'REMI (IA)'}
                 </strong>
+                {chat.imagen && (
+                  <div style={{ marginBottom: '0.5rem', borderRadius: '6px', overflow: 'hidden', border: '1px solid #38bdf8' }}>
+                    <img src={chat.imagen} alt="Preview" style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', display: 'block', background: '#000' }} />
+                  </div>
+                )}
                 {chat.texto}
               </div>
             ))}
             <div ref={chatEndRef} />
           </div>
 
-          {menuDesplegableAbierto && (
-            <div style={{ background: '#1e293b', padding: '0.8rem', borderRadius: '8px', marginBottom: '0.8rem', display: 'flex', gap: '1rem', border: '1px solid #334155' }}>
-              <button onClick={() => { alert("Adjuntar archivo seleccionado"); setMenuDesplegableAbierto(false); }} style={{ background: '#0f172a', color: '#38bdf8', border: '1px solid #475569', padding: '0.5rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                📎 Adjuntar Archivo / Imagen
+          {/* Panel flotante de previsualización de imagen adjunta antes de enviar */}
+          {imagenBase64 && (
+            <div style={{ background: '#0f2922', border: '1px solid #059669', padding: '0.6rem', borderRadius: '8px', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <img src={imagenBase64} alt="Miniatura" style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #34d399' }} />
+                <span style={{ fontSize: '0.8rem', color: '#34d399' }}>📎 Listo para Iris: <strong>{nombreArchivo}</strong></span>
+              </div>
+              <button onClick={() => { setImagenBase64(null); setNombreArchivo(''); }} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>✕</button>
+            </div>
+          )}
+
+          {/* Menú de Opciones y Sentidos desplegable */}
+          {menuAbierto && (
+            <div style={{ background: '#1e293b', padding: '0.8rem', borderRadius: '8px', marginBottom: '0.8rem', display: 'flex', gap: '0.8rem', border: '1px solid #334155', zIndex: 10 }}>
+              <label style={{ background: '#0f172a', color: '#38bdf8', border: '1px solid #475569', padding: '0.4rem 0.7rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
+                📎 Adjuntar Imagen / Archivo
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  accept="image/*"
+                  style={{ display: 'none' }} 
+                  onChange={handleFileChange} 
+                />
+              </label>
+              <button 
+                onClick={toggleMic} 
+                style={{ background: '#0f172a', color: escuchandoVoz ? '#f43f5e' : '#4ade80', border: '1px solid #475569', padding: '0.4rem 0.7rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+              >
+                🎤 Micrófono ({escuchandoVoz ? 'ON' : 'OFF'})
               </button>
-              <button onClick={() => { alert("Micrófono activado para dictado"); setMenuDesplegableAbierto(false); }} style={{ background: '#0f172a', color: '#4ade80', border: '1px solid #475569', padding: '0.5rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                🎤 Micrófono (Voz)
-              </button>
-              <button onClick={() => { alert("Síntesis de voz (Parlante) activada"); setMenuDesplegableAbierto(false); }} style={{ background: '#0f172a', color: '#f472b6', border: '1px solid #475569', padding: '0.5rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                🔊 Escuchar Respuesta
+              <button 
+                onClick={toggleEscucharRespuesta} 
+                style={{ background: '#0f172a', color: modoAudioVega ? '#4ade80' : '#94a3b8', border: '1px solid #475569', padding: '0.4rem 0.7rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+              >
+                🔊 Voz Vega ({modoAudioVega ? 'ON' : 'OFF'})
               </button>
             </div>
           )}
 
-          <form onSubmit={enviarMensaje} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1e293b', padding: '0.5rem 0.8rem', borderRadius: '12px', border: '1px solid #334155' }}>
-            
+          {/* Área de Entrada y Botones */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <button 
-              type="button" 
-              onClick={() => setMenuDesplegableAbierto(!menuDesplegableAbierto)}
-              style={{ background: '#334155', color: '#fff', border: 'none', width: '38px', height: '38px', borderRadius: '50%', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'background 0.2s' }}
-              title="Herramientas adicionales (Adjuntar, Voz, Audio)"
+              onClick={() => setMenuAbierto(!menuAbierto)}
+              style={{ background: '#1e293b', border: '1px solid #475569', color: '#38bdf8', padding: '0.7rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}
+              title="Menú de Sentidos (Iris / Vega)"
             >
-              +
+              ➕
             </button>
 
-            <input 
-              type="text" 
+            <textarea
+              rows="1"
+              style={{ flex: 1, padding: '0.7rem', background: '#020617', color: '#f8fafc', border: '1px solid #334155', borderRadius: '8px', resize: 'none', outline: 'none', fontSize: '0.9rem' }}
               value={mensaje}
               onChange={(e) => setMensaje(e.target.value)}
-              placeholder="Escribe tu mensaje o instrucción para REMI..." 
-              style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: '1rem', outline: 'none', padding: '0.5rem' }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }}}
+              placeholder={escuchandoVoz ? "Escuchando voz..." : "Escribe tu instrucción o adjunta una imagen..."}
             />
 
             <button 
-              type="submit" 
-              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s' }}
+              onClick={enviar}
+              disabled={loading}
+              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '0.7rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}
             >
-              Enviar
+              {loading ? '...' : 'Enviar'}
             </button>
-          </form>
-
-        </section>
+          </div>
+        </div>
 
       </div>
-
     </main>
   );
 }
