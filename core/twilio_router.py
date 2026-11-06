@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Form, Request, HTTPException
+cat << 'EOF' > core/twilio_router.py
+from fastapi import APIRouter, Form, Response
 from pydantic import BaseModel, Field
 from typing import Optional
 import datetime
+import requests
+import os
 
 router = APIRouter(prefix="/api/v1", tags=["Twilio WhatsApp"])
 
@@ -18,7 +21,6 @@ class TwilioInboundWebhook(BaseModel):
 
     @property
     def identity(self) -> str:
-        """Devuelve ExternalUserId (BSUID) si está presente; de lo contrario el número en From."""
         return self.ExternalUserId or self.From
 
 @router.post("/webhook")
@@ -42,9 +44,16 @@ async def receive_whatsapp_message(
     )
     
     user_id = payload.identity
-    print(f"[{datetime.datetime.now()}] Mensaje recibido de {user_id}: {payload.Body}")
+    user_message = payload.Body or ""
+    print(f"[{datetime.datetime.now()}] Mensaje recibido de {user_id}: {user_message}")
     
-    # Respuesta TwiML estándar para confirmar recepción a Twilio
-    twiml_response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>"
-    from fastapi.responses import Response
+    # Generamos la respuesta inteligente (puedes conectar tu lógica de Ollama o una respuesta dinámica de REMI)
+    remi_reply = f"Hola Ramón, recibí tu mensaje: '{user_message}'. REMI_Enterprise_Suite online y operando con soporte BSUID 2026."
+
+    # Construimos la respuesta oficial en TwiML que Twilio lee para responder al usuario en WhatsApp
+    twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>{remi_reply}</Message>
+</Response>"""
+    
     return Response(content=twiml_response, media_type="application/xml")
