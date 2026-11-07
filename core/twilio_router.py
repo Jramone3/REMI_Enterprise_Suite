@@ -1,10 +1,7 @@
-cat << 'EOF' > core/twilio_router.py
 from fastapi import APIRouter, Form, Response
 from pydantic import BaseModel, Field
 from typing import Optional
 import datetime
-import requests
-import os
 
 router = APIRouter(prefix="/api/v1", tags=["Twilio WhatsApp"])
 
@@ -47,10 +44,8 @@ async def receive_whatsapp_message(
     user_message = payload.Body or ""
     print(f"[{datetime.datetime.now()}] Mensaje recibido de {user_id}: {user_message}")
     
-    # Generamos la respuesta inteligente (puedes conectar tu lógica de Ollama o una respuesta dinámica de REMI)
     remi_reply = f"Hola Ramón, recibí tu mensaje: '{user_message}'. REMI_Enterprise_Suite online y operando con soporte BSUID 2026."
 
-    # Construimos la respuesta oficial en TwiML que Twilio lee para responder al usuario en WhatsApp
     twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Message>{remi_reply}</Message>
