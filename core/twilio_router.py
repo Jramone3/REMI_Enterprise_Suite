@@ -4,8 +4,8 @@ import requests
 
 router = APIRouter(prefix="/api/v1", tags=["Twilio WhatsApp Proxy"])
 
-# URL fija de tu túnel local en localtunnel
-LOCAL_TUNNEL_URL = "https://remi-bunker-node.loca.lt/api/whatsapp/webhook"
+# URL activa de Pinggy
+LOCAL_TUNNEL_URL = "https://qgdog-190-6-9-193.free.pinggy.net/api/whatsapp/webhook"
 
 @router.post("/webhook")
 async def proxy_whatsapp_webhook(request: Request):
@@ -13,10 +13,9 @@ async def proxy_whatsapp_webhook(request: Request):
         form_data = await request.form()
         form_dict = dict(form_data)
         
-        print(f"[{datetime.datetime.now()}] [RENDER PROXY] Reenviando a túnel fijo: {LOCAL_TUNNEL_URL}")
+        print(f"[{datetime.datetime.now()}] [RENDER PROXY] Reenviando a Pinggy: {LOCAL_TUNNEL_URL}")
         
-        headers = {"Bypass-Tunnel-Reminder": "true"}
-        local_response = requests.post(LOCAL_TUNNEL_URL, data=form_dict, headers=headers, timeout=20)
+        local_response = requests.post(LOCAL_TUNNEL_URL, data=form_dict, timeout=20)
         
         if local_response.status_code == 200:
             return Response(content=local_response.content, media_type="application/xml")
