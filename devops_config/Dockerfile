@@ -1,24 +1,22 @@
-# Dockerfile for REMI Enterprise Suite
-
 FROM python:3.10-slim
 
-ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
-# Install system dependencies required for cryptography and web3
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential libssl-dev libffi-dev git curl \
+# Instalar dependencias del sistema necesarias
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# Copiar archivos de requerimientos
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copiar el código fuente de la aplicación
 COPY . .
 
-EXPOSE 8501
+# Variables de entorno por defecto
+ENV PORT=5000
+EXPOSE 5000
 
-# Default command: run Streamlit app
-CMD ["streamlit", "run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+# Comando canónico de arranque unificado
+CMD ["uvicorn", "main_api:app", "--host", "0.0.0.0", "--port", "5000"]

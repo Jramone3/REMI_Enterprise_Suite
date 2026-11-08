@@ -9,51 +9,32 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10']
 
     steps:
-    - name: Clonar Repositorio
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Configurar Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.10'
         cache: 'pip'
 
-    - name: Actualizar pip, setuptools y wheel
+    - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip setuptools wheel
-
-    - name: Instalar dependencias de producción
-      run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Instalar dependencias de desarrollo y testing
-      run: |
         pip install -r requirements-dev.txt
 
-    - name: Validar linting con flake8
+    - name: Lint with flake8
       run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # Excluimos carpetas anidadas, venvs y submódulos para evitar recursión
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=bunker_respaldo,graphify-out,node_modules,.git
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics --exclude=bunker_respaldo,graphify-out,node_modules,.git
 
-    - name: Ejecutar pruebas unitarias con pytest y coverage
-      env:
-        MONGO_URI: "mongodb+srv://mock_user:mock_pass@cluster.mock.mongodb.net/test?retryWrites=true&w=majority"
-        GEMINI_API_KEY: "mock_gemini_key_for_ci"
-        TEST_MODE: "true"
-        REMI_API_KEY: "test_admin_key_123"
+    - name: Test with pytest
       run: |
-        pytest -v --cov=./ --cov-report=term-missing --cov-report=html --tb=short
+        pytest --cov=. --cov-report=xml
 
-    - name: Validar construcción de Docker Image
+    - name: Build Docker Image
       run: |
-        docker build -t remi-enterprise:test .
-
-    - name: Mostrar resumen de test coverage
-      if: always()
-      run: |
-        echo "✅ Pipeline de CI/CD completado exitosamente"
+        docker build -f devops_config/Dockerfile -t remi-enterprise:latest .

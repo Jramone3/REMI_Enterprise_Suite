@@ -36,3 +36,4 @@ tmp/
 *.log
 >>>>>>> e864046f2efb9118f4a371ec7e9003d20c0b7779
 reports_analytics/patrimonio/remi_extractor.py
+.env
