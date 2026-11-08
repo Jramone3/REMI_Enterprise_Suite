@@ -19,9 +19,9 @@ import base64
 import pytesseract
 from PIL import Image
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
-from gtts import gTTS
+from twilio.twiml.messaging_response import MessagingResponse
 from datetime import timezone, timedelta
 
 # Importar el prompt centralizado (Fuente Única de Verdad)
@@ -105,7 +105,7 @@ def bunker_shell(cmd):
         return f"SYSTEM_EXECUTION_ERROR: {str(e)}"
 
 def consultar_remi_hibrido(prompt_usuario: str, system_prompt: str):
-    """Inference execution engine prioritizing Cerebras Cloud (qwen-3.8-27b) with local Ollama fallback."""
+    """Inference execution engine prioritizing Cerebras Cloud with Ollama Local (remi:3b) fallback."""
     
     # 1. Intentar con Cerebras Cloud (Velocidad milisegundos)
     if CEREBRAS_AVAILABLE and cerebras_engine:
@@ -116,15 +116,17 @@ def consultar_remi_hibrido(prompt_usuario: str, system_prompt: str):
         except Exception as ex:
             print(f"[WARN] Cerebras falló, intentando Ollama local: {ex}")
 
-    # 2. Resiliencia: Fallback a Ollama Local (sda7 / qwen2.5:3b)
+    # 2. Resiliencia: Fallback a Ollama Local oficial (sda7 / remi:3b)
     try:
         response = ollama.chat(
-            model='qwen2.5:3b',
-            keep_alive=-1,
+            model='remi:3b',
+            keep_alive=300,
             options={
-                'temperature': 0.4,
-                'num_ctx': 2048,
-                'num_thread': 2
+                'temperature': 0.3,
+                'num_ctx': 1024,
+                'num_thread': 4,
+                'top_p': 0.9,
+                'num_predict': 256
             },
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -132,40 +134,11 @@ def consultar_remi_hibrido(prompt_usuario: str, system_prompt: str):
             ]
         )
         if response and 'message' in response and 'content' in response['message']:
-            return response['message']['content'], "Ollama Local (qwen2.5:3b)"
+            return response['message']['content'], "Ollama Local (remi:3b - Sata7 Optimized)"
     except Exception as local_ex:
         print(f"[WARN] Ollama local falló: {local_ex}")
 
     return "ERROR: Null payload returned by both Cerebras and Local Ollama engines.", "General Failure"
-
-def hablar_remi(texto: str):
-    """Executes Vega TTS background speech synthesis with null-safety sanitization."""
-    if not texto or not isinstance(texto, str):
-        return False
-    try:
-        clean_text = texto.replace("*", "").replace("\n", " ").strip()
-        cmd = f"python3 {VEGA_SCRIPT_PATH} \"{clean_text}\""
-        subprocess.Popen(["/bin/bash", "-c", cmd])
-        return True
-    except Exception as e:
-        print(f"Vega TTS execution error: {e}")
-        return False
-
-def sintetizar_remoto(texto, lang='es'):
-    """Generates MP3 audio payload in /tmp/remi_response.mp3 safely."""
-    if not texto or not isinstance(texto, str):
-        return None
-    try:
-        clean_text = texto.replace("*", "").replace("\n", " ").strip()
-        if not clean_text:
-            return None
-        tts = gTTS(text=clean_text, lang=lang, slow=False)
-        output_path = "/tmp/remi_response.mp3"
-        tts.save(output_path)
-        return output_path
-    except Exception as e:
-        print(f"Remote audio synthesis error: {e}")
-        return None
 
 @app.get("/")
 def read_root():
@@ -177,79 +150,6 @@ def read_root():
         "orbital_gateway_active": ORBITAL_GATEWAY_AVAILABLE,
         "timestamp": datetime.datetime.now(timezone.utc).isoformat()
     }
-
-@app.get("/api/status")
-def get_system_status():
-    return {
-        "core_status": "OPERATIONAL",
-        "primary_engine": "Cerebras Cloud (qwen-3.8-27b)" if CEREBRAS_AVAILABLE else "Ollama Local",
-        "orbital_gateway": "INTEGRATED (5 Pillars)" if ORBITAL_GATEWAY_AVAILABLE else "DISABLED",
-        "port": 5000,
-        "environment": "Sovereign Desktop Node"
-    }
-
-@app.get("/api/status_caza")
-async def get_status_caza():
-    return {
-        "t1": {"status": "ONLINE", "log": "Local bunker telemetry active...", "color": "#64ffda"},
-        "t2": {"status": "HYBRID_ACTIVE", "log": "Cerebras qwen-3.8-27b & Ollama ready", "color": "#64ffda"},
-        "t3": {"status": "LIVE", "log": "Sovereign Node & Vega TTS Operational", "color": "#f2a900"},
-        "t4": {"status": "NEURAL_GRAPH_ONDEMAND" if neural_graph_available else "OFFLINE", "log": "Neural Graph 119k (sda7 - Standby Mode)", "color": "#64ffda"}
-    }
-
-@app.get("/api/audio")
-async def obtener_audio_temporal():
-    audio_path = "/tmp/remi_response.mp3"
-    if os.path.exists(audio_path):
-        return FileResponse(
-            audio_path, 
-            media_type="audio/mpeg",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Accept-Ranges": "bytes"
-            }
-        )
-    return JSONResponse(
-        status_code=404,
-        content={"status": "NOT_FOUND", "message": "Audio payload not yet synthesized."}
-    )
-
-@app.get("/api/orbital/telemetry")
-def get_orbital_telemetry_json():
-    if not ORBITAL_GATEWAY_AVAILABLE:
-        raise HTTPException(
-            status_code=503, 
-            detail=f"Orbital Gateway module unavailable: {ORBITAL_IMPORT_ERROR}"
-        )
-    return {
-        "timestamp": datetime.datetime.now(timezone.utc).isoformat(),
-        "iss_telemetry": fetch_iss_telemetry(),
-        "atmospheric_indices": fetch_global_atmospheric_indices(),
-        "webcam_nodes": {
-            "public": fetch_public_webcam_nodes(),
-            "authorized": fetch_authorized_secure_feeds()
-        },
-        "starlink_constellation": fetch_starlink_constellation_telemetry(),
-        "abae_sovereign": fetch_abae_telemetry()
-    }
-
-@app.get("/api/orbital/summary")
-def get_orbital_summary_text():
-    if not ORBITAL_GATEWAY_AVAILABLE:
-        raise HTTPException(
-            status_code=503, 
-            detail=f"Orbital Gateway module unavailable: {ORBITAL_IMPORT_ERROR}"
-        )
-    summary = (
-        f"=== REMI ORBITAL GATEWAY CONTEXT BLOCK ===\n\n"
-        f"{compile_orbital_matrix()}\n\n"
-        f"{compile_earth_observation_matrix()}\n\n"
-        f"{compile_visual_surveillance_matrix()}\n\n"
-        f"{compile_starlink_matrix()}\n\n"
-        f"{compile_abae_matrix()}\n\n"
-        f"============================================"
-    )
-    return {"status": "SUCCESS", "formatted_summary": summary}
 
 # ==============================================================================
 # SUBRUTINA DE PERCEPCIÓN ÓPTICA ADAPTATIVA ROBUSTA (IRIS CORE)
@@ -266,17 +166,14 @@ def procesar_vision_iris(image_payload):
             formato = img.format
             modo = img.mode
             
-            # Extraer texto visible
             texto_extraido = pytesseract.image_to_string(img, lang='spa+eng').strip()
             texto_lower = texto_extraido.lower()
             
-            # Palabras clave ampliadas para detección de avatar/interfaz de REMI
             keywords_identidad = [
                 "tiger", "data", "storage", "sda5", "reality", "improve", 
                 "bright", "better", "corp", "remi", "into", "debug", "explain"
             ]
             
-            # Verificar si coincide con la interfaz/avatar oficial
             es_identidad = any(kw in texto_lower for kw in keywords_identidad)
             
             if es_identidad:
@@ -304,107 +201,90 @@ def procesar_vision_iris(image_payload):
     except Exception as img_err:
         return f"\n[ERROR EN NODO ÓPTICO DE IRIS]: {str(img_err)}\n"
 
-@app.post("/api/remi")
-async def remi_endpoint(request: Request):
-    response_text = ""
-    response_origin = "Local Failure"
-    audio_path = None
+# ==============================================================================
+# TWILIO WHATSAPP GATEWAY & WEBHOOK MODULE (CON SOPORTE IRIS MULTIMEDIA)
+# ==============================================================================
+WHATSAPP_LOG_PATH = os.path.expanduser("~/") + "REMI_CORE/bunker/REMI/ARCHIVOS_PERSONALES_RAMON/Proyecto_Remi_IA_App/REMI_CHATS/whatsapp_history.json"
+
+@app.post("/api/whatsapp/webhook")
+async def whatsapp_webhook(request: Request):
+    """Handles incoming webhook messages from Twilio Sandbox with IRIS Optical Support."""
     try:
-        data = await request.json()
-        user_input = data.get("message", "")
-        image_payload = data.get("image", None)
-        speak_flag = data.get("speak", True)
-        requested_lang = data.get("lang", "es")
-        
-        imagen_metadata = ""
-        if image_payload:
-            # Llamada permanente al nodo de visión de Iris
-            imagen_metadata = procesar_vision_iris(image_payload)
+        form_data = await request.form()
+        incoming_msg = form_data.get("Body", "").strip()
+        raw_from = form_data.get("From", "")
+        sender_phone = raw_from.replace("whatsapp: ", "whatsapp:")
+        if "whatsapp:5" in sender_phone and "whatsapp:+5" not in sender_phone:
+            sender_phone = sender_phone.replace("whatsapp:5", "whatsapp:+5")
 
-        user_input_con_imagen = user_input + "\n" + imagen_metadata
+        media_url = form_data.get("MediaUrl0", None)
 
-        graph_triggers = ["busca en memoria", "consulta el grafo", "revisa archivos", "nodo sda7", "[RECALL]"]
-        needs_graph = any(kw in user_input.lower() for kw in graph_triggers)
-        
-        if needs_graph and neural_graph_available:
-            neural_context = consultar_grafo_neuronal(user_input)
-            graph_origin = " + Neural Graph (sda7)"
+        print(f"[WHATSAPP INCOMING] From: {sender_phone} | Text: {incoming_msg} | Media: {media_url}")
+
+        # Instanciar la respuesta oficial de Twilio
+        resp = MessagingResponse()
+
+        if "join properly-beside" in incoming_msg.lower():
+            response_text = "🤖 [REMI_CORE - ENLACE ACTIVO] 🟢\n\n¡Hola Ramón! Conexión de WhatsApp establecida con éxito. El nodo soberano está listo."
+            resp.message(response_text)
         else:
-            neural_context = "Operating Mode: High-speed direct execution (Graph bypassed)."
-            graph_origin = " (Direct Mode)"
-        
-        if "[EXEC]" in user_input:
-            command = user_input.split("[EXEC]")[1].split("[/EXEC]")[0]
-            bash_result = bunker_shell(command)
-            user_input_con_imagen = f"[DISK COMMAND OUTPUT]: {bash_result}\nAnalyze execution metrics."
+            imagen_metadata = ""
+            if media_url:
+                try:
+                    res = requests.get(media_url)
+                    if res.status_code == 200:
+                        img_b64 = base64.b64encode(res.content).decode("utf-8")
+                        imagen_metadata = procesar_vision_iris(img_b64)
+                except Exception as img_err:
+                    print(f"[WHATSAPP IRIS ERROR]: {img_err}")
 
-        ven_time = datetime.datetime.now(timezone(timedelta(hours=-4)))
-        hora_12h = ven_time.strftime("%I:%M:%S %p")
-        fecha_actual = ven_time.strftime("%d/%m/%Y")
+            full_prompt = incoming_msg
+            if imagen_metadata:
+                full_prompt += f"\n\n[IRIS Metadata Visual]: {imagen_metadata}"
+            
+            system_prompt = f"{BASE_SYSTEM_PROMPT}\n\n[CONTEXTO WHATSAPP]: Estás respondiendo a través del canal de WhatsApp de Twilio al administrador {sender_phone}."
+            response_text, engine_used = consultar_remi_hibrido(full_prompt, system_prompt)
+            
+            resp.message(response_text)
 
-        system_prompt = (
-            f"{BASE_SYSTEM_PROMPT}\n\n"
-            f"### MANDATORY ENVIRONMENTAL & SPATIAL-TEMPORAL MATRIX\n"
-            f"- Geographic Node: Aragua, Venezuela (UTC-4)\n"
-            f"- Active Epoch Date: {fecha_actual}\n"
-            f"- Precise Temporal Index: {hora_12h} (12-hour AM/PM format)\n\n"
-            f"### OPERATIONAL CONTEXT\n"
-            f"{neural_context}\n\n"
-            f"### CRITICAL TEMPORAL DIRECTIVE\n"
-            f"Upon query regarding time, enforce strictly 12-hour AM/PM formatting (e.g., 01:46 PM); 24-hour military notation is strictly prohibited.\n\n"
-            f"### OUTPUT MANDATE\n"
-            f"Regardless of internal technical taxonomy, logic gates, and structured tokens processed in rigorous technical English, "
-            f"the final output rendered to the user MUST be strictly formatted in fluent Latin American Spanish (Español Latam).\n"
-        )
-        
-        response_text, engine_used = consultar_remi_hibrido(user_input_con_imagen, system_prompt)
-        response_origin = f"{engine_used}{graph_origin}"
-
-        if not response_text or not isinstance(response_text, str):
-            response_text = "Core processed the payload but generated no text output."
-
-        if speak_flag:
+        os.makedirs(os.path.dirname(WHATSAPP_LOG_PATH), exist_ok=True)
+        history = []
+        if os.path.exists(WHATSAPP_LOG_PATH):
             try:
-                import subprocess; subprocess.Popen(["python3", "/home/ramon/REMI_CORE/bunker/VOZ_REMI/vega.py", response_text])
+                with open(WHATSAPP_LOG_PATH, "r", encoding="utf-8") as f:
+                    history = json.load(f)
             except Exception:
-                pass
-
-        try:
-            os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
-            with open(LOG_PATH, "a", encoding="utf-8") as log_file:
-                log_file.write(f"\n[{datetime.datetime.now()}] [CUSTODIAN]: {user_input}\n🤖 [REMI ({response_origin})]: {response_text}\n")
-        except Exception as e:
-            print(f"Log error: {e}")
-
-        audio_path = None
-
-        return {
-            "status": "OPERATIONAL",
-            "decision_engine": f"Processed via {response_origin}",
-            "execution_status": "Sovereign Local & Vega TTS",
-            "message": response_text,
-            "response": response_text,
-            "response_payload": response_text,
-            "audio_remoto_path": audio_path
-        }
+                history = []
         
+        history.append({
+            "timestamp": datetime.datetime.now().isoformat(),
+            "sender": sender_phone,
+            "message": incoming_msg,
+            "has_media": bool(media_url),
+            "response": response_text
+        })
+        
+        with open(WHATSAPP_LOG_PATH, "w", encoding="utf-8") as f:
+            json.dump(history[-50:], f, indent=2, ensure_ascii=False)
+
+        return Response(content=str(resp), media_type="application/xml")
+
     except Exception as e:
-        err_msg = f"❌ Critical endpoint exception: {str(e)}"
-        return {
-            "status": "ERROR",
-            "decision_engine": f"Processed via {response_origin}",
-            "execution_status": "Sovereign Local & Vega TTS",
-            "mensaje": err_msg,
-            "message": err_msg,
-            "response": err_msg,
-            "response_payload": err_msg,
-            "audio_path": None
-        }
+        print(f"[WHATSAPP WEBHOOK ERROR]: {e}")
+        err_resp = MessagingResponse()
+        err_resp.message("⚠️ [REMI Error Interno]: Procesando nodo.")
+        return Response(content=str(err_resp), media_type="application/xml")
+
+@app.get("/api/whatsapp/messages")
+def get_whatsapp_messages():
+    if os.path.exists(WHATSAPP_LOG_PATH):
+        try:
+            with open(WHATSAPP_LOG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
 
 if __name__ == "__main__":
     print("[INIT] Starting REMI Enterprise Suite API on Port 5000 (Hybrid Mode)...")
-    if ORBITAL_GATEWAY_AVAILABLE:
-        print("[SUCCESS] Orbital Gateway (5 Pillars) integrated successfully.")
-    else:
-        print(f"[WARNING] Orbital Gateway not loaded: {ORBITAL_IMPORT_ERROR}")
     uvicorn.run(app, host="0.0.0.0", port=5000)
