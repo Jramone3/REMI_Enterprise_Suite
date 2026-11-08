@@ -12,6 +12,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -27,13 +30,12 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        # Excluimos carpetas anidadas, venvs y submódulos para evitar recursión
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=bunker_respaldo,graphify-out,node_modules,.git
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics --exclude=bunker_respaldo,graphify-out,node_modules,.git
+        # Escaneamos exclusivamente código propio mantenido, evitando recursiones y carpetas vendorizadas
+        flake8 main_api.py tests devops_config --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Test with pytest
       run: |
-        pytest --cov=. --cov-report=xml
+        pytest -q
 
     - name: Build Docker Image
       run: |
