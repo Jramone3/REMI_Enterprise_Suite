@@ -29,8 +29,8 @@ jobs:
         pip install mcp pytest
 
     - name: Run pytest
-      env:
-        PYTHONPATH: ".:core/global_hub/Bunker-OS-Notion-MCP:auth_gateways"
+      run: |
+        PYTHONPATH=".:auth_gateways:core/global_hub/Bunker-OS-Notion-MCP" pytest -o pythonpath=".:auth_gateways" -q
       run: |
         pytest -q
 
