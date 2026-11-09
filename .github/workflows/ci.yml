@@ -31,8 +31,6 @@ jobs:
     - name: Run pytest
       run: |
         PYTHONPATH=".:auth_gateways:core/global_hub/Bunker-OS-Notion-MCP" pytest -o pythonpath=".:auth_gateways" -q
-      run: |
-        pytest -q
 
     - name: Build Docker Image
       run: |
