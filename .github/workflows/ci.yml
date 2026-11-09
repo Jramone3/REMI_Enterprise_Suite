@@ -28,15 +28,9 @@ jobs:
         pip install -r requirements.txt
         pip install mcp pytest
 
-    - name: Prepare source modules for testing
-      run: |
-        mkdir -p auth_gateways
-        touch auth_gateways/__init__.py
-        cp auth_gateways/*.py .
-
     - name: Run pytest
       env:
-        PYTHONPATH: "."
+        PYTHONPATH: ".:auth_gateways"
       run: |
         pytest tests/ -p no:pytest_ethereum -q
 
