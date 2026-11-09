@@ -30,7 +30,7 @@ jobs:
 
     - name: Run pytest
       env:
-        PYTHONPATH: ".:core/global_hub/Bunker-OS-Notion-MCP"
+        PYTHONPATH: ".:core/global_hub/Bunker-OS-Notion-MCP:auth_gateways"
       run: |
         pytest -q
 
