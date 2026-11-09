@@ -28,12 +28,18 @@ jobs:
         pip install -r requirements.txt
         pip install mcp pytest
 
-    - name: Run pytest
+    - name: Prepare source modules for testing
       run: |
+        mkdir -p auth_gateways
         touch auth_gateways/__init__.py
-        # Copiamos físicamente los archivos de auth_gateways a la raíz para que la colección de pytest sea infalible
+        # Copiamos físicamente los archivos al directorio raíz para que pytest los encuentre de inmediato
         cp auth_gateways/*.py .
-        PYTHONPATH=".:auth_gateways:core/global_hub/Bunker-OS-Notion-MCP" pytest -o pythonpath=".:auth_gateways" -q
+
+    - name: Run pytest
+      env:
+        PYTHONPATH: "."
+      run: |
+        pytest -q
 
     - name: Build Docker Image
       run: |
