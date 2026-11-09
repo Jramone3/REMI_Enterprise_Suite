@@ -1,3 +1,5 @@
+mcp<2
+mongomock
 fastapi>=0.100.0
 uvicorn[standard]>=0.22.0
 twilio>=8.0.0
