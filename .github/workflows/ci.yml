@@ -26,11 +26,17 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install mcp pytest
+        pip install "httpx<0.28.0" mongomock mcp pytest
+
+    - name: Prepare source modules for testing
+      run: |
+        mkdir -p auth_gateways
+        touch auth_gateways/__init__.py
+        cp auth_gateways/*.py . || true
 
     - name: Run pytest
       env:
-        PYTHONPATH: ".:auth_gateways"
+        PYTHONPATH: "."
       run: |
         pytest tests/ -p no:pytest_ethereum -q
 
