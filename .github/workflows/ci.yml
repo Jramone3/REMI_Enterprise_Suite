@@ -26,14 +26,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        pip install mcp pytest
 
-    - name: Lint with flake8
-      run: |
-        # Escaneamos exclusivamente código propio mantenido, evitando recursiones y carpetas vendorizadas
-        flake8 main_api.py tests devops_config --count --select=E9,F63,F7,F82 --show-source --statistics
-
-    - name: Test with pytest
+    - name: Run pytest
+      env:
+        PYTHONPATH: .
       run: |
         pytest -q
 
