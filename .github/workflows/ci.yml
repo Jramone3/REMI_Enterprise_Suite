@@ -31,8 +31,8 @@ jobs:
     - name: Run pytest
       run: |
         touch auth_gateways/__init__.py
-        # Creamos enlaces simbólicos en la raíz para que los imports directos funcionen perfectamente
-        ln -sf auth_gateways/*.py .
+        # Copiamos físicamente los archivos de auth_gateways a la raíz para que la colección de pytest sea infalible
+        cp auth_gateways/*.py .
         PYTHONPATH=".:auth_gateways:core/global_hub/Bunker-OS-Notion-MCP" pytest -o pythonpath=".:auth_gateways" -q
 
     - name: Build Docker Image
