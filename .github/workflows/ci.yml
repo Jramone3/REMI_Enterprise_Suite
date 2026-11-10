@@ -30,16 +30,24 @@ jobs:
 
     - name: Prepare source modules for testing
       run: |
-        mkdir -p auth_gateways
+        mkdir -p auth_gateways tests
         touch auth_gateways/__init__.py
-        cp auth_gateways/*.py . || true
+        touch tests/__init__.py
 
-    - name: Run pytest
+    - name: Run pytest with Coverage
       env:
-        PYTHONPATH: "."
+        PYTHONPATH: ".:auth_gateways"
       run: |
-        pytest tests/ -p no:pytest_ethereum -q
+        pytest tests/ --cov=auth_gateways --cov-report=term-missing --cov-fail-under=20 -p no:pytest_ethereum
 
     - name: Build Docker Image
       run: |
         docker build -f devops_config/Dockerfile -t remi-enterprise:latest .
+
+    - name: Integration Test Docker Container
+      run: |
+        docker run -d -p 8000:8000 --name remi-test-container remi-enterprise:latest
+        sleep 3
+        curl -f http://localhost:8000/ || exit 1
+        docker stop remi-test-container
+        docker rm remi-test-container
