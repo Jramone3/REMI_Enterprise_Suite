@@ -5,7 +5,8 @@ from pymongo import MongoClient
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 
 def get_client():
-    return MongoClient(MONGO_URI)
+    # Timeout corto para evitar bloqueos síncronos fatales en contenedores aislados
+    return MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000, connectTimeoutMS=2000)
 
 def init_db():
     """Inicializa la base de datos y crea los índices únicos necesarios de forma segura."""
