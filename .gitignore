@@ -1,29 +1,31 @@
-# Python / PyInstaller
+# Python & Entornos
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .coverage
+.env
+
+# Builds y paquetes
 build/
 dist/
 *.spec
-.env
+node_modules/
+**/node_modules/
 
-# Directorios de compilación y staging locales
+# Directorios de Staging y Submódulos anidados
 staging_clean/
 staging_pure/
 dist_gumroad/
-auditor_ciberinteligencia/build/
+REMI_Enterprise_Suite/
 auditor_ciberinteligencia/dist/
+auditor_ciberinteligencia/build/
 auditor_ciberinteligencia/reports/
 auditor_ciberinteligencia/feeds/
-
-# Submódulos y repositorios anidados externos
-REMI_Enterprise_Suite/
-auditor_ciberinteligencia/
 core/auditoria_c/
 core/global_hub/
 
-# Logs y bases de datos locales
+# Logs y temporal
 *.log
 *.sqlite
+**/node_modules/
