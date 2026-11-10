@@ -1,39 +1,29 @@
-<<<<<<< HEAD
-# Entornos y dependencias
+# Python / PyInstaller
 __pycache__/
-*.pyc
-.venv/
-venv/
-node_modules/
-
-# Configuración y Secretos
+*.py[cod]
+*$py.class
+*.so
+.coverage
+build/
+dist/
+*.spec
 .env
-*.env
-*.pem
-*.key
 
-# Modelos pesados y binarios locales (se quedan en tu disco local sda7 / bunker)
-*.gguf
-modelos/*.gguf
-motores/bin/
-bunker/
+# Directorios de compilación y staging locales
+staging_clean/
+staging_pure/
+dist_gumroad/
+auditor_ciberinteligencia/build/
+auditor_ciberinteligencia/dist/
+auditor_ciberinteligencia/reports/
+auditor_ciberinteligencia/feeds/
 
-# Logs y reportes temporales
+# Submódulos y repositorios anidados externos
+REMI_Enterprise_Suite/
+auditor_ciberinteligencia/
+core/auditoria_c/
+core/global_hub/
+
+# Logs y bases de datos locales
 *.log
-reports_analytics/*.json
-!reports_analytics/AUDITOR_SERVICE_MANIFEST.json.example
-graphify-out/
-bunker/
-=======
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
-.DS_Store
-logs/
-tmp/
-*.log
->>>>>>> e864046f2efb9118f4a371ec7e9003d20c0b7779
-reports_analytics/patrimonio/remi_extractor.py
-.env
+*.sqlite
