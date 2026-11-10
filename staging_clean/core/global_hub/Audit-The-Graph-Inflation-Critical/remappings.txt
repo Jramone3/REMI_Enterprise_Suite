@@ -1,0 +1,13 @@
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/utils/math/=lib/openzeppelin-contracts/contracts/utils/math/
+@openzeppelin/contracts/utils/cryptography/=lib/openzeppelin-contracts/contracts/utils/cryptography/
+@openzeppelin/contracts-upgradeable/utils/math/=lib/openzeppelin-contracts-upgradeable/contracts/utils/math/
+@openzeppelin/contracts-upgradeable/proxy/utils/=lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/
+@openzeppelin/contracts-upgradeable/security/=lib/openzeppelin-contracts-upgradeable/contracts/security/
+@openzeppelin/contracts-upgradeable/token/=lib/openzeppelin-contracts-upgradeable/contracts/token/
+@openzeppelin/contracts-upgradeable/utils/cryptography/=lib/openzeppelin-contracts-upgradeable/contracts/utils/cryptography/
+forge-std/=lib/forge-std/src/
+@graphprotocol/horizon/=contracts/packages/horizon/contracts/
+@graphprotocol/interfaces/=contracts/packages/interfaces/contracts/
+subgraph-service/=contracts/packages/subgraph-service/contracts/

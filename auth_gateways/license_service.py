@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta
 import hashlib
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
 # Cargar explícitamente el archivo .env local
 load_dotenv()
@@ -11,24 +12,34 @@ load_dotenv()
 from fastapi import FastAPI, Request, HTTPException, Depends, Header, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
-from db import init_db, save_license, find_license_by_email, save_audit_log
-from remi_tx_validator import validate_transaction
+from auth_gateways.db import init_db, save_license, find_license_by_email, save_audit_log
+from auth_gateways.remi_tx_validator import validate_transaction
 
 # Configuración de logging estructurado
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("remi_license_service")
 
+# Definimos el ciclo de vida (Lifespan) moderno para FastAPI
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # --- Código que se ejecuta al INICIAR la app ---
+    init_db()
+    logger.info("🚀 REMI Enterprise Suite - Búnker DB inicializado y restricciones de índices únicos aplicadas.")
+    print("🚀 REMI Enterprise Suite - Licencias iniciado correctamente.")
+    
+    yield
+    
+    # --- Código que se ejecuta al APAGAR la app ---
+    logger.info("🛑 Apagando servicios de REMI Enterprise...")
+    print("🛑 Apagando servicios...")
+
+# Inicializamos FastAPI pasando el lifespan y metadatos limpios
 app = FastAPI(
     title="REMI License Microservice",
     version="2.2.0",
-    description="Microservicio blindado de emisión, verificación de licencias, pagos fiduciarios (Stripe) y automatización para REMI Enterprise Suite"
+    description="Microservicio blindado de emisión, verificación de licencias, pagos fiduciarios (Stripe) y automatización para REMI Enterprise Suite",
+    lifespan=lifespan
 )
-
-# Evento de inicio: inicializa la base de datos y crea índices únicos
-@app.on_event("startup")
-def startup_event():
-    init_db()
-    logger.info("Búnker DB inicializado y restricciones de índices únicos aplicadas.")
 
 # Esquemas de datos
 class LicenseRequest(BaseModel):
@@ -91,7 +102,6 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
     
     # -------------------------------------------------------------------------
     # BYPASS LOCAL PRIVADO (Solo funciona si tu archivo .env tiene esta variable)
-    # Como el archivo .env está en tu .gitignore, GitHub NUNCA verá este bloque
     # -------------------------------------------------------------------------
     local_master_bypass = os.getenv("REMI_INTERNAL_BYPASS_HASH")
     if local_master_bypass and payload.tx_hash == local_master_bypass:
@@ -138,7 +148,7 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
             detail="tx_hash es obligatorio para clientes comerciales."
         )
         
-    # Validación comercial normal (la que se sube a GitHub)
+    # Validación comercial normal
     verification = validate_transaction(payload.tx_hash, expected_min_amount=499.0, is_erc20=True)
     if not verification.get("valid"):
         raise HTTPException(
@@ -191,7 +201,7 @@ async def stripe_webhook(request: Request):
     endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
     if not endpoint_secret:
-        logger.error("STRIPE_WEBHOOK_SECRET não está configurado.")
+        logger.error("STRIPE_WEBHOOK_SECRET no está configurado.")
         raise HTTPException(status_code=500, detail="Webhook secret no configurado en el servidor.")
 
     try:
@@ -244,7 +254,7 @@ async def create_github_issue(issue: IssueRequest, api_key: str = Depends(verify
         logger.error("GITHUB_BOT_TOKEN no configurado en el servidor.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="GITHUB_BOT_TOKEN não está configurado en el servidor."
+            detail="GITHUB_BOT_TOKEN no está configurado en el servidor."
         )
     
     def _create_issue_sync():

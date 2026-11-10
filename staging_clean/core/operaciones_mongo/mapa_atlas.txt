@@ -1,0 +1,45 @@
+======================================================================
+REMI CORE - OPERACIONES MONGODB ATLAS
+BITÁCORA MAESTRA DE REFERENCIA Y MAPA DE INFRAESTRUCTURA
+======================================================================
+Última Actualización Global: Mayo 2026
+Entorno Operativo: Linux Mint XFCE (Intel Core i5 650)
+Estado del Clúster: Activo / Autenticación Verificada
+Acceso de Red (IP Access List): 0.0.0.0/0 (Acceso REMI Total Configurado)
+Usuario Maestro: jramonrivasg_db_user
+
+----------------------------------------------------------------------
+1. ESTRUCTURA REAL Y MAPEO DE DOCUMENTOS (MIGRACIÓN POST-SDA5)
+----------------------------------------------------------------------
+
+📂 BASE DE DATOS: [SISTEMA_REMI]
+   └── 📜 Colección: 'neuronas_esenciales' -> 3 Documentos Reales
+       * Contenido: Arquitectura base, llave maestra Xano (v1.0.8), API Flask local y escáner SHA256.
+
+📂 BASE DE DATOS: [remi]
+   └── 📜 Colección: 'agent_status' -> 1 Documento Real
+       * Contenido: Estado de sincronización y banderas operativas del agente.
+
+📂 BASE DE DATOS: [remi_memoria]
+   └── 📜 Colección: 'trazas_patronales' -> 130,001 Documentos Reales
+       * Contenido: Historial masivo indexado por 'id_patrimonial' (Origen: recup_dir.464).
+
+📂 BASE DE DATOS: [sample_mflix] (Entorno de pruebas y esquemas)
+   └── 📜 Colección: 'theaters' ---------> 1,564 Documentos
+   └── 📜 Colección: 'comments' ---------> 41,079 Documentos
+   └── 📜 Colección: 'embedded_movies' --> 3,483 Documentos
+   └── 📜 Colección: 'users' ------------> 185 Documentos
+   └── 📜 Colección: 'sessions' ---------> 1 Documento
+   └── 📜 Colección: 'movies' -----------> 21,349 Documentos
+
+📂 BASE DE DATOS: [test]
+   └── 📜 Colección: 'mensajes_remi' -> 1 Documento Real
+
+----------------------------------------------------------------------
+TOTAL DE DOCUMENTOS CUSTODIADOS EN CLUSTER0: 197,667 REGISTROS
+----------------------------------------------------------------------
+
+2. PROTOCOLO DE ACTUALIZACIONES FUTURAS
+----------------------------------------------------------------------
+* Cualquier adición de módulos de IA (LLMs, MCP) o cambios en los esquemas de bases de datos debe indexarse en esta bitácora para mantener la auditabilidad SHA256.
+* Las consultas masivas sobre 'trazas_patronales' deben ejecutarse de forma quirúrgica por ID Patrimonial para mitigar la sobrecarga de memoria del hardware local.

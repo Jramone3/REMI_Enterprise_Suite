@@ -1,0 +1,4 @@
+Ajustes para hardware i5-650. 
+Gestión de swaps en sda5 para mitigar latencia de disco. 
+Sincronización de procesos activos en MintBridge XFCE. 
+Uso eficiente de Wine Gecko para el entorno lúdico-terapéutico sin comprometer el MOTOR_GLOBAL.

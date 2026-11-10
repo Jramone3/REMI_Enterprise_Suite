@@ -1,0 +1,11 @@
+{
+    "service": "REMI-C Low-Level Security Audit",
+    "target_script": "remi_c_auditor.py",
+    "capabilities": [
+        "LFI detection",
+        "Static code analysis",
+        "Smart contract review"
+    ],
+    "pricing_model": "Pay-per-scan / B2B Subscription",
+    "status": "Ready for deployment"
+}

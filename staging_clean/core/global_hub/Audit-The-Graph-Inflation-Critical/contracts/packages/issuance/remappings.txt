@@ -1,0 +1,2 @@
+@graphprotocol/interfaces/=contracts/packages/node_modules/@graphprotocol/interfaces/
+forge-std/=lib/forge-std/src/

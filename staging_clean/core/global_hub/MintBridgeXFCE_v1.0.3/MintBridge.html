@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es-en">
+<head>
+  <meta charset="UTF-8">
+  <title>MintBridge XFCE v1.0</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <header>
+    <img src="banner_mintbridge.png" alt="Banner MintBridge XFCE v1.0 – Validated migration (ES/EN)">
+  </header>
+
+  <main>
+    <section id="introduccion">
+      <h1>Migración validada: Windows 10 ➔ Linux Mint XFCE</h1>
+      <h1>Validated migration: Windows 10 ➔ Linux Mint XFCE</h1>
+      <p>Guía técnica paso a paso para validar compatibilidad y ejecutar el script <code>check_compatibility.ps1</code>.</p>
+      <p>Step-by-step technical guide to validate compatibility and run the script <code>check_compatibility.ps1</code>.</p>
+    </section>
+
+    <section id="requisitos">
+      <h2>Requisitos mínimos / Minimum requirements</h2>
+      <ul>
+        <li>CPU mínima: 1 núcleo / Minimum CPU: 1 core</li>
+        <li>RAM recomendada: 2 GB / Recommended RAM: 2 GB</li>
+        <li>Almacenamiento libre: 20 GB / Free storage: 20 GB</li>
+        <li>Autor: "jramonrivasg" / Author: "jramonrivasg"</li>
+      </ul>
+    </section>
+
+    <section id="descarga">
+      <h2>Descarga / Download</h2>
+      <a href="MintBridgeXFCE_v1.0.zip" download>
+        📥 Descargar MintBridge v1.0 / 📥 Download MintBridge v1.0
+      </a>
+    </section>
+
+    <section id="verificacion">
+      <h2>Verificación técnica / Technical verification</h2>
+      <p>Todos los archivos críticos están firmados digitalmente con clave blindada.</p>
+      <p>All critical files are digitally signed with hardened key.</p>
+      <pre>
+gpg --verify MintBridge.html.sig MintBridge.html
+sha256sum -c MintBridgeXFCE_v1.0.sha256
+      </pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>MintBridge XFCE v1.0 – Blindaje comunitario bajo el estándar jramonrivasg</p>
+    <p>MintBridge XFCE v1.0 – Community shielding under jramonrivasg standard</p>
+  </footer>
+</body>
+</html>

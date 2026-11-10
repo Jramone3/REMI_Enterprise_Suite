@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REMI Enterprise Suite | IA multiagente con licencias y auditoría</title>
+  <meta name="description" content="Framework open source de IA multiagente con servicio de licencias, pagos Stripe y on-chain (Base) y auditoría en MongoDB. Despliegue propio con Docker Compose." />
+  <meta property="og:title" content="REMI Enterprise Suite" />
+  <meta property="og:description" content="IA multiagente, licencias y auditoría en un solo stack. Open source, self-hosted." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="alternate" hreflang="es" href="?lang=es" />
+  <link rel="alternate" hreflang="en" href="?lang=en" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { ink: '#0b1220', panel: '#111a2e', teal: { 400: '#2dd4bf', 500: '#14b8a6' }, violet: { 400: '#a78bfa', 500: '#8b5cf6' } } } }
+    }
+  </script>
+  <style>
+    .glow { background: radial-gradient(60% 50% at 50% 0%, rgba(139,92,246,.25), transparent 70%), radial-gradient(40% 40% at 80% 20%, rgba(45,212,191,.15), transparent 70%); }
+    .lang-btn[aria-pressed="true"] { background: rgba(45,212,191,.15); color: #2dd4bf; }
+  </style>
+</head>
+<body class="bg-ink text-slate-200 antialiased">
+
+  <!-- NAV -->
+  <header class="sticky top-0 z-50 border-b border-white/5 bg-ink/80 backdrop-blur">
+    <nav class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+      <a href="#" class="text-lg font-bold tracking-tight text-white">REMI <span class="text-teal-400">Enterprise Suite</span></a>
+      <div class="flex items-center gap-5 text-sm">
+        <div class="hidden items-center gap-7 md:flex">
+          <a href="#caracteristicas" class="hover:text-white" data-i18n="nav_features">Características</a>
+          <a href="#arquitectura" class="hover:text-white" data-i18n="nav_arch">Arquitectura</a>
+          <a href="#despliegue" class="hover:text-white" data-i18n="nav_deploy">Despliegue</a>
+          <a href="#licencias" class="hover:text-white" data-i18n="nav_license">Licencias</a>
+          <a href="https://github.com/Jramone3/REMI_Enterprise_Suite" target="_blank" rel="noopener" class="rounded-lg border border-white/10 px-3 py-1.5 hover:border-teal-400 hover:text-white">GitHub</a>
+        </div>
+        <div class="flex overflow-hidden rounded-lg border border-white/10 text-xs font-semibold" role="group" aria-label="Idioma / Language">
+          <button type="button" class="lang-btn px-2.5 py-1.5" data-lang="es" aria-pressed="true">ES</button>
+          <button type="button" class="lang-btn px-2.5 py-1.5" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="glow">
+    <div class="mx-auto max-w-6xl px-5 pb-20 pt-20 text-center md:pt-28">
+      <p class="mb-4 inline-block rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-medium text-teal-400">Open source · MIT · Self-hosted</p>
+      <h1 class="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-white md:text-6xl" data-i18n="hero_h1">
+        Agentes de IA que puedes <span class="bg-gradient-to-r from-teal-400 to-violet-400 bg-clip-text text-transparent">operar, auditar y vender</span>
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-400" data-i18n="hero_p">
+        REMI Enterprise Suite reúne en un solo stack el centro de comando multiagente, un servicio de licencias, pagos con Stripe y on-chain (red Base) y un registro de auditoría en MongoDB.
+      </p>
+      <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a href="https://remi-enterprise-suite.onrender.com" target="_blank" rel="noopener" data-i18n="cta_demo"
+           class="w-full rounded-xl bg-gradient-to-r from-teal-500 to-violet-500 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 hover:opacity-90 sm:w-auto">Probar la demo interactiva</a>
+        <a href="https://github.com/Jramone3/REMI_Enterprise_Suite" target="_blank" rel="noopener" data-i18n="cta_repo"
+           class="w-full rounded-xl border border-white/15 px-6 py-3 font-semibold text-white hover:border-teal-400 sm:w-auto">Ver el código en GitHub</a>
+      </div>
+      <p class="mt-4 text-xs text-slate-500" data-i18n="demo_note">La demo está en un plan gratuito: la primera carga puede tardar hasta un minuto.</p>
+    </div>
+  </section>
+
+  <!-- PROBLEMA -->
+  <section class="border-y border-white/5 bg-panel/50">
+    <div class="mx-auto grid max-w-6xl gap-6 px-5 py-14 md:grid-cols-3">
+      <div><p class="text-sm font-semibold text-teal-400" data-i18n="pb1_t">1. Acceso</p><p class="mt-1 text-slate-300" data-i18n="pb1_d">¿Quién puede ejecutar tus agentes y hasta cuándo?</p></div>
+      <div><p class="text-sm font-semibold text-teal-400" data-i18n="pb2_t">2. Cobro</p><p class="mt-1 text-slate-300" data-i18n="pb2_d">¿Cómo pagan tus clientes y cómo se emite su licencia?</p></div>
+      <div><p class="text-sm font-semibold text-teal-400" data-i18n="pb3_t">3. Trazabilidad</p><p class="mt-1 text-slate-300" data-i18n="pb3_d">¿Puedes demostrar qué ocurrió y cuándo?</p></div>
+    </div>
+  </section>
+
+  <!-- CARACTERISTICAS -->
+  <section id="caracteristicas" class="mx-auto max-w-6xl px-5 py-20">
+    <h2 class="text-3xl font-bold text-white" data-i18n="feat_h2">Todo lo que necesitas para llevar agentes a producción</h2>
+    <div class="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <article class="rounded-2xl border border-white/10 bg-panel p-6">
+        <h3 class="font-semibold text-white" data-i18n="f1_t">Centro de comando multiagente</h3>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="f1_d">Interfaz Streamlit para operaciones guiadas por IA y chat operativo con el LLM que configures.</p>
+      </article>
+      <article class="rounded-2xl border border-white/10 bg-panel p-6">
+        <h3 class="font-semibold text-white" data-i18n="f2_t">Servicio de licencias</h3>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="f2_d">API FastAPI para emitir, verificar y consultar licencias por correo, con control de expiración.</p>
+      </article>
+      <article class="rounded-2xl border border-white/10 bg-panel p-6">
+        <h3 class="font-semibold text-white" data-i18n="f3_t">Pagos con tarjeta (Stripe)</h3>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="f3_d">Webhooks que emiten la licencia automáticamente tras una compra exitosa.</p>
+      </article>
+      <article class="rounded-2xl border border-white/10 bg-panel p-6">
+        <h3 class="font-semibold text-white" data-i18n="f4_t">Validación on-chain en Base</h3>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="f4_d">Revisa el recibo y los logs de transferencia ERC-20: token, monto mínimo y destinatario.</p>
+      </article>
+      <article class="rounded-2xl border border-white/10 bg-panel p-6">
+        <h3 class="font-semibold text-white" data-i18n="f5_t">Auditoría en MongoDB</h3>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="f5_d">Licencias y eventos operativos persistidos para trazabilidad y revisión posterior.</p>
+      </article>
+      <article class="rounded-2xl border border-white/10 bg-panel p-6">
+        <h3 class="font-semibold text-white" data-i18n="f6_t">Automatización con GitHub</h3>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="f6_d">Crea issues técnicos directamente desde la plataforma con un token de bot.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ARQUITECTURA -->
+  <section id="arquitectura" class="border-y border-white/5 bg-panel/50">
+    <div class="mx-auto max-w-6xl px-5 py-20">
+      <h2 class="text-3xl font-bold text-white" data-i18n="arch_h2">Arquitectura modular</h2>
+      <p class="mt-3 max-w-2xl text-slate-400" data-i18n="arch_p">Presentación, backend, verificación de transacciones y persistencia separados en componentes que puedes entender, probar y escalar por separado.</p>
+      <div class="mt-10 overflow-hidden rounded-2xl border border-white/10">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-white/5 text-slate-300"><tr><th class="px-4 py-3" data-i18n="th_comp">Componente</th><th class="px-4 py-3" data-i18n="th_role">Rol</th></tr></thead>
+          <tbody class="divide-y divide-white/5 text-slate-400">
+            <tr><td class="px-4 py-3 font-mono text-teal-400">app.py</td><td class="px-4 py-3" data-i18n="r1">Interfaz Streamlit: control operativo y licenciamiento</td></tr>
+            <tr><td class="px-4 py-3 font-mono text-teal-400">license_service.py</td><td class="px-4 py-3" data-i18n="r2">Backend FastAPI: emisión y validación de licencias</td></tr>
+            <tr><td class="px-4 py-3 font-mono text-teal-400">remi_tx_validator.py</td><td class="px-4 py-3" data-i18n="r3">Validación de pagos on-chain en Base</td></tr>
+            <tr><td class="px-4 py-3 font-mono text-teal-400">db.py</td><td class="px-4 py-3" data-i18n="r4">Acceso a MongoDB: licencias y auditoría</td></tr>
+            <tr><td class="px-4 py-3 font-mono text-teal-400">Dockerfile · docker-compose.yml</td><td class="px-4 py-3" data-i18n="r5">Despliegue en contenedores</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESPLIEGUE -->
+  <section id="despliegue" class="mx-auto max-w-6xl px-5 py-20">
+    <h2 class="text-3xl font-bold text-white" data-i18n="dep_h2">Despliégalo en tu propia infraestructura</h2>
+    <p class="mt-3 max-w-2xl text-slate-400" data-i18n="dep_p">Descarga el <code class="text-teal-400">docker-compose.yml</code>, define tus variables de entorno y levanta el stack.</p>
+    <div class="mt-8 grid gap-6 lg:grid-cols-2">
+      <div class="rounded-2xl border border-white/10 bg-panel p-6">
+        <pre class="overflow-x-auto text-sm leading-relaxed text-slate-300"><code># 1. Clone / Clonar
+git clone https://github.com/Jramone3/REMI_Enterprise_Suite.git
+cd REMI_Enterprise_Suite
+
+# 2. Configure env vars / Configurar variables (.env.example)
+cp .env.example .env
+
+# 3. Start the stack / Levantar el stack
+docker compose up -d</code></pre>
+      </div>
+      <div class="flex flex-col justify-center gap-3">
+        <a href="https://raw.githubusercontent.com/Jramone3/REMI_Enterprise_Suite/main/docker-compose.yml" target="_blank" rel="noopener" data-i18n="dl_compose"
+           class="rounded-xl bg-teal-500 px-6 py-3 text-center font-semibold text-ink hover:bg-teal-400">Descargar docker-compose.yml</a>
+        <a href="https://github.com/Jramone3/REMI_Enterprise_Suite/blob/main/.env.example" target="_blank" rel="noopener" data-i18n="dl_env"
+           class="rounded-xl border border-white/15 px-6 py-3 text-center font-semibold text-white hover:border-teal-400">Ver .env.example</a>
+        <a href="https://github.com/Jramone3/REMI_Enterprise_Suite/blob/main/DEPLOYMENT_CHECKLIST.md" target="_blank" rel="noopener" data-i18n="dl_check"
+           class="rounded-xl border border-white/15 px-6 py-3 text-center font-semibold text-white hover:border-teal-400">Checklist de despliegue</a>
+        <p class="text-xs text-slate-500"><span data-i18n="env_req">Variables obligatorias:</span> MONGO_URI, REMI_DB_NAME, REMI_PAYMENT_ADDRESS, BASE_RPC_URL, REMI_API_KEY, LLM_HOST.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LICENCIAS -->
+  <section id="licencias" class="border-t border-white/5 bg-panel/50">
+    <div class="mx-auto max-w-6xl px-5 py-20">
+      <h2 class="text-3xl font-bold text-white" data-i18n="lic_h2">Licencias</h2>
+      <div class="mt-10 grid gap-6 md:grid-cols-2">
+        <div class="rounded-2xl border border-white/10 bg-ink p-6">
+          <h3 class="text-xl font-semibold text-white">Open source (MIT)</h3>
+          <p class="mt-2 text-sm text-slate-400" data-i18n="mit_d">Usa, modifica y despliega el código con la licencia MIT del repositorio.</p>
+          <a href="https://github.com/Jramone3/REMI_Enterprise_Suite" target="_blank" rel="noopener" data-i18n="mit_a" class="mt-5 inline-block text-sm font-semibold text-teal-400 hover:underline">Ir al repositorio →</a>
+        </div>
+        <div class="rounded-2xl border border-violet-400/40 bg-ink p-6">
+          <h3 class="text-xl font-semibold text-white" data-i18n="com_t">Licencia comercial</h3>
+          <p class="mt-2 text-sm text-slate-400"><span data-i18n="com_d">Para empresas que necesitan términos comerciales. Consulta las condiciones en</span> <a class="text-teal-400 hover:underline" href="https://github.com/Jramone3/REMI_Enterprise_Suite/blob/main/COMMERCIAL_LICENSE.md" target="_blank" rel="noopener">COMMERCIAL_LICENSE.md</a>.</p>
+          <a href="#adquirir" data-i18n="com_a" class="mt-5 inline-block text-sm font-semibold text-violet-400 hover:underline">Solicitar licencia →</a>
+        </div>
+      </div>
+
+      <!-- FORMULARIO -->
+      <div id="adquirir" class="mx-auto mt-14 max-w-xl rounded-2xl border border-white/10 bg-ink p-6 md:p-8">
+        <h3 class="text-xl font-semibold text-white" data-i18n="form_h3">Solicitar una licencia</h3>
+        <p class="mt-1 text-sm text-slate-400" data-i18n="form_p">Te responderemos con los pasos para completar el pago y emitir tu licencia.</p>
+        <form id="license-form" class="mt-6 space-y-4" action="https://formspree.io/f/TU_FORM_ID" method="POST">
+          <div>
+            <label for="name" class="block text-sm text-slate-300" data-i18n="l_name">Nombre</label>
+            <input id="name" name="name" required class="mt-1 w-full rounded-lg border border-white/10 bg-panel px-3 py-2 text-white focus:border-teal-400 focus:outline-none" />
+          </div>
+          <div>
+            <label for="email" class="block text-sm text-slate-300" data-i18n="l_email">Correo de trabajo</label>
+            <input id="email" name="email" type="email" required class="mt-1 w-full rounded-lg border border-white/10 bg-panel px-3 py-2 text-white focus:border-teal-400 focus:outline-none" />
+          </div>
+          <div>
+            <label for="company" class="block text-sm text-slate-300" data-i18n="l_company">Empresa</label>
+            <input id="company" name="company" class="mt-1 w-full rounded-lg border border-white/10 bg-panel px-3 py-2 text-white focus:border-teal-400 focus:outline-none" />
+          </div>
+          <div>
+            <label for="payment" class="block text-sm text-slate-300" data-i18n="l_pay">Método de pago preferido</label>
+            <select id="payment" name="payment" class="mt-1 w-full rounded-lg border border-white/10 bg-panel px-3 py-2 text-white focus:border-teal-400 focus:outline-none">
+              <option value="stripe" data-i18n="o_stripe">Tarjeta (Stripe)</option>
+              <option value="base" data-i18n="o_base">On-chain (red Base)</option>
+              <option value="undecided" data-i18n="o_und">Aún no lo sé</option>
+            </select>
+          </div>
+          <div>
+            <label for="msg" class="block text-sm text-slate-300" data-i18n="l_msg">Cuéntanos tu caso de uso</label>
+            <textarea id="msg" name="message" rows="3" class="mt-1 w-full rounded-lg border border-white/10 bg-panel px-3 py-2 text-white focus:border-teal-400 focus:outline-none"></textarea>
+          </div>
+          <input type="text" name="_gotcha" class="hidden" tabindex="-1" autocomplete="off" />
+          <button type="submit" data-i18n="btn_send" class="w-full rounded-xl bg-gradient-to-r from-teal-500 to-violet-500 px-6 py-3 font-semibold text-white hover:opacity-90">Enviar solicitud</button>
+          <p id="form-status" class="text-center text-sm" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-white/5 py-10 text-center text-sm text-slate-500">
+    <p>© <span id="year"></span> REMI Enterprise Suite ·
+      <a class="hover:text-white" href="https://github.com/Jramone3/REMI_Enterprise_Suite" target="_blank" rel="noopener">GitHub</a> ·
+      <a class="hover:text-white" href="https://remi-enterprise-suite.onrender.com" target="_blank" rel="noopener">Demo</a> ·
+      <a class="hover:text-white" href="https://github.com/Jramone3/REMI_Enterprise_Suite/blob/main/SECURITY.md" target="_blank" rel="noopener" data-i18n="sec">Seguridad</a>
+    </p>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---------- i18n: ES (LATAM) es el contenido del HTML; EN técnico está aquí ----------
+    const EN = {
+      nav_features: 'Features', nav_arch: 'Architecture', nav_deploy: 'Deployment', nav_license: 'Licensing',
+      hero_h1: 'AI agents you can <span class="bg-gradient-to-r from-teal-400 to-violet-400 bg-clip-text text-transparent">operate, audit and sell</span>',
+      hero_p: 'REMI Enterprise Suite bundles a multi-agent command center, a license service, Stripe and on-chain (Base) payment validation, and a MongoDB audit log into a single self-hostable stack.',
+      cta_demo: 'Try the live demo', cta_repo: 'View source on GitHub',
+      demo_note: 'The demo runs on a free tier: the first request may take up to a minute (cold start).',
+      pb1_t: '1. Access control', pb1_d: 'Who can run your agents, and until when?',
+      pb2_t: '2. Billing', pb2_d: 'How do customers pay, and how is their license issued?',
+      pb3_t: '3. Traceability', pb3_d: 'Can you prove what happened, and when?',
+      feat_h2: 'Everything you need to take agents to production',
+      f1_t: 'Multi-agent command center', f1_d: 'Streamlit UI for AI-guided operations and operational chat against the LLM endpoint you configure.',
+      f2_t: 'License service', f2_d: 'FastAPI service to issue, verify and look up licenses by email, with expiry control.',
+      f3_t: 'Card payments (Stripe)', f3_d: 'Webhooks that issue a license automatically after a successful purchase.',
+      f4_t: 'On-chain validation on Base', f4_d: 'Inspects the transaction receipt and ERC-20 Transfer logs: token address, minimum amount and recipient.',
+      f5_t: 'MongoDB audit log', f5_d: 'Licenses and operational events are persisted for traceability and later review.',
+      f6_t: 'GitHub automation', f6_d: 'Create technical issues straight from the platform using a bot token.',
+      arch_h2: 'Modular architecture',
+      arch_p: 'UI, backend, transaction verification and persistence are separate components you can understand, test and scale independently.',
+      th_comp: 'Component', th_role: 'Role',
+      r1: 'Streamlit UI: operations and licensing', r2: 'FastAPI backend: license issuance and validation',
+      r3: 'On-chain payment validation on Base', r4: 'MongoDB access: licenses and audit log', r5: 'Container deployment',
+      dep_h2: 'Self-host it on your own infrastructure',
+      dep_p: 'Download the <code class="text-teal-400">docker-compose.yml</code>, set your environment variables and bring the stack up.',
+      dl_compose: 'Download docker-compose.yml', dl_env: 'View .env.example', dl_check: 'Deployment checklist',
+      env_req: 'Required env vars:',
+      lic_h2: 'Licensing',
+      mit_d: 'Use, modify and deploy the code under the repository\'s MIT license.', mit_a: 'Go to the repository →',
+      com_t: 'Commercial license', com_d: 'For companies that need commercial terms. See the conditions in', com_a: 'Request a license →',
+      form_h3: 'Request a license', form_p: 'We will reply with the steps to complete payment and issue your license.',
+      l_name: 'Name', l_email: 'Work email', l_company: 'Company', l_pay: 'Preferred payment method',
+      o_stripe: 'Card (Stripe)', o_base: 'On-chain (Base network)', o_und: 'Not sure yet',
+      l_msg: 'Tell us about your use case', btn_send: 'Send request', sec: 'Security',
+      s_missing: 'Form endpoint not configured yet (replace TU_FORM_ID).',
+      s_sending: 'Sending…', s_ok: 'Thanks! We received your request and will get back to you soon.',
+      s_err: 'Could not send. Please try again later.',
+      title: 'REMI Enterprise Suite | Multi-agent AI with licensing and audit',
+      desc: 'Open-source multi-agent AI framework with a license service, Stripe and on-chain (Base) payments, and a MongoDB audit log. Self-hosted via Docker Compose.'
+    };
+    const ES = {
+      s_missing: 'Falta configurar el endpoint del formulario (reemplaza TU_FORM_ID).',
+      s_sending: 'Enviando…', s_ok: '¡Gracias! Recibimos tu solicitud y te escribiremos pronto.',
+      s_err: 'No se pudo enviar. Inténtalo de nuevo más tarde.',
+      title: document.title, desc: document.querySelector('meta[name="description"]').content
+    };
+    // Captura el español original del DOM
+    document.querySelectorAll('[data-i18n]').forEach(el => { ES[el.dataset.i18n] = el.innerHTML.trim(); });
+
+    const metaDesc = document.querySelector('meta[name="description"]');
+    let current = 'es';
+    const t = (k) => (current === 'en' ? EN : ES)[k];
+
+    function setLang(lang) {
+      current = lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (v !== undefined) el.innerHTML = v; });
+      document.title = t('title'); metaDesc.content = t('desc');
+      document.querySelectorAll('.lang-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+      try { localStorage.setItem('remi_lang', lang); } catch (_) {}
+    }
+    document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+
+    // Prioridad: ?lang=xx > preferencia guardada > idioma del navegador > ES
+    (function init() {
+      const q = new URLSearchParams(location.search).get('lang');
+      let saved = null; try { saved = localStorage.getItem('remi_lang'); } catch (_) {}
+      const nav = (navigator.language || 'es').toLowerCase().startsWith('en') ? 'en' : 'es';
+      const lang = ['es', 'en'].includes(q) ? q : (saved || nav);
+      if (lang !== 'es') setLang(lang);
+    })();
+
+    // ---------- Formulario ----------
+    // Requiere reemplazar TU_FORM_ID (Formspree, Getform, Basin...) o apuntar a tu propio endpoint.
+    const form = document.getElementById('license-form');
+    const statusEl = document.getElementById('form-status');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (form.action.includes('TU_FORM_ID')) {
+        statusEl.className = 'text-center text-sm text-amber-400';
+        statusEl.textContent = t('s_missing');
+        return;
+      }
+      statusEl.className = 'text-center text-sm text-slate-400';
+      statusEl.textContent = t('s_sending');
+      try {
+        const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        form.reset();
+        statusEl.className = 'text-center text-sm text-teal-400';
+        statusEl.textContent = t('s_ok');
+      } catch (err) {
+        statusEl.className = 'text-center text-sm text-red-400';
+        statusEl.textContent = t('s_err');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-10-31T09:51:33.950697",
+  "total_analyzed": 1147,
+  "critical_high_priority": 581,
+  "findings": [
+    {
+      "cve_id": "CVE-2003-1233",
+      "cvss": 9.8,
+      "subsystem": "kernel",
+      "description": "Pedestal Software Integrity Protection Driver (IPD) 1.3 and earlier allows privileged attackers, such as rootkits, to bypass file access restrictions to the Windows kernel by using the NtCreateSymboli..."
+    },
+    {
+      "cve_id": "CVE-2004-2339",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "Microsoft Windows 2000, XP, and possibly 2003 allows local users with the SeDebugPrivilege privilege to execute arbitrary code as kernel and read or write kernel memory via the NtSystemDebugControl fu..."
+    },
+    {
+      "cve_id": "CVE-2008-3431",
+      "cvss": 8.8,
+      "subsystem": "kernel",
+      "description": "The VBoxDrvNtDeviceControl function in VBoxDrv.sys in Sun xVM VirtualBox before 1.6.4 uses the METHOD_NEITHER communication method for IOCTLs and does not properly validate a buffer associated with th..."
+    },
+    {
+      "cve_id": "CVE-2010-1896",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "The Windows kernel-mode drivers in win32k.sys in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP1 and SP2, and Windows Server 2008 Gold and SP2 do not properly validate use..."
+    },
+    {
+      "cve_id": "CVE-2010-2943",
+      "cvss": 8.1,
+      "subsystem": "kernel",
+      "description": "The xfs implementation in the Linux kernel before 2.6.35 does not look up inode allocation btrees before reading inode buffers, which allows remote authenticated users to read unlinked files, or read ..."
+    },
+    {
+      "cve_id": "CVE-2010-3941",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "Double free vulnerability in win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP1 and SP2, Windows Server 2008 Gold and SP2, and Window..."
+    },
+    {
+      "cve_id": "CVE-2011-0671",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "Use-after-free vulnerability in win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP1 and SP2, Windows Server 2008 Gold, SP2, R2, and R2..."
+    },
+    {
+      "cve_id": "CVE-2011-1231",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP1 and SP2, Windows Server 2008 Gold, SP2, R2, and R2 SP1, and Windows 7 Gold and SP1..."
+    },
+    {
+      "cve_id": "CVE-2011-1881",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP1 and SP2, Windows Server 2008 Gold, SP2, R2, and R2 SP1, and Windows 7 Gold and SP1..."
+    },
+    {
+      "cve_id": "CVE-2011-3402",
+      "cvss": 8.8,
+      "subsystem": "kernel",
+      "description": "Unspecified vulnerability in the TrueType font parsing engine in win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP2, Windows Server 2..."
+    },
+    {
+      "cve_id": "CVE-2012-0157",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP2, Windows Server 2008 SP2, R2, and R2 SP1, and Windows 7 Gold and SP1 does not prop..."
+    },
+    {
+      "cve_id": "CVE-2011-3188",
+      "cvss": 9.1,
+      "subsystem": "kernel",
+      "description": "The (1) IPv4 and (2) IPv6 implementations in the Linux kernel before 3.1 use a modified MD4 algorithm to generate sequence numbers and Fragment Identification values, which makes it easier for remote ..."
+    },
+    {
+      "cve_id": "CVE-2011-3191",
+      "cvss": 8.8,
+      "subsystem": "kernel",
+      "description": "Integer signedness error in the CIFSFindNext function in fs/cifs/cifssmb.c in the Linux kernel before 3.1 allows remote CIFS servers to cause a denial of service (memory corruption) or possibly have u..."
+    },
+    {
+      "cve_id": "CVE-2012-1867",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "Integer overflow in win32k.sys in the kernel-mode drivers in Microsoft Windows XP SP2 and SP3, Windows Server 2003 SP2, Windows Vista SP2, Windows Server 2008 SP2, R2, and R2 SP1, and Windows 7 Gold a..."
+    },
+    {
+      "cve_id": "CVE-2013-2094",
+      "cvss": 8.4,
+      "subsystem": "kernel",
+      "description": "The perf_swevent_init function in kernel/events/core.c in the Linux kernel before 3.8.9 uses an incorrect integer data type, which allows local users to gain privileges via a crafted perf_event_open s..."
+    }
+  ]
+}

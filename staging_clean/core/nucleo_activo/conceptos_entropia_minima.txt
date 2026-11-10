@@ -1,0 +1,3 @@
+La entropía se combate mediante la estructura, no la acumulación. 
+Regla de limpieza semanal: purga de logs >5MB y eliminación de dependencias redundantes en node_modules. 
+El orden en sda5 garantiza la persistencia en sda7.

@@ -1,0 +1,15 @@
+{
+  "target_system": "Linux Mint / Ubuntu / Debian x86_64",
+  "monitored_subsystems": [
+    "kernel",
+    "mptcp",
+    "netfilter",
+    "openssl",
+    "systemd",
+    "docker"
+  ],
+  "action_policies": {
+    "cvss_critical_action": "generate_immediate_alert",
+    "auto_mitigation_enabled": false
+  }
+}

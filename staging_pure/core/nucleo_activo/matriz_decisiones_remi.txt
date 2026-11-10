@@ -1,0 +1,5 @@
+Protocolos de prioridad operativa. 
+Prioridad 0: Integridad de datos en sda5. 
+Prioridad 1: Coherencia narrativa. 
+Prioridad 2: Expansión patrimonial. 
+Cada decisión debe pasar el filtro del Protocolo Oro (Integridad, Estabilidad, Preservación, Coherencia).

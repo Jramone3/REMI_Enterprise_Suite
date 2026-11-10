@@ -1,0 +1,14 @@
+name: remi-autonomous-security-auditor
+description: Skill autónomo de ciberinteligencia y auditoría profunda para REMI_CORE.
+triggers:
+  - "ejecutar auditoria de ciberinteligencia"
+  - "auditar sistema y verificar datos"
+  - "iniciar segundo nivel de auditoria"
+
+workflow:
+  phase_1_collection:
+    action: "python3 ~/REMI_CORE/auditor_ciberinteligencia/run_audit.py"
+  phase_2_secondary_audit:
+    action: "python3 ~/REMI_CORE/auditor_ciberinteligencia/engine/second_audit_validator.py"
+  phase_3_enterprise_integration:
+    action: "Visualización directa en la interfaz Streamlit http://localhost:8501"

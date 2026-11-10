@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>REMI AuthBridge – Interfaz Maestra</title>
+  <link rel="icon" type="image/png" href="./remi_logo.png" />
+  <link rel="shortcut icon" href="./favicon.ico" />
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
+  <script defer src="app.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    button {
+      margin: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+    pre {
+      background: #fff;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>REMI AuthBridge – Interfaz Maestra</h1>
+  <p>Demostración funcional de login con Auth0 integrada al flujo patrimonial.</p>
+
+  <button id="login">Iniciar sesión</button>
+  <button id="logout" style="display:none;">Cerrar sesión</button>
+
+  <h2>Perfil autenticado</h2>
+  <pre id="profile">No autenticado aún.</pre>
+</body>
+</html>

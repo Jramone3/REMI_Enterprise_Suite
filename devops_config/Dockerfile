@@ -18,5 +18,5 @@ COPY . .
 ENV PORT=5000
 EXPOSE 5000
 
-# Comando canónico de arranque unificado
-CMD ["uvicorn", "main_api:app", "--host", "0.0.0.0", "--port", "5000"]
+# Comando canónico de arranque unificado apuntando a auth_gateways.license_service
+CMD ["uvicorn", "auth_gateways.license_service:app", "--host", "0.0.0.0", "--port", "5000"]

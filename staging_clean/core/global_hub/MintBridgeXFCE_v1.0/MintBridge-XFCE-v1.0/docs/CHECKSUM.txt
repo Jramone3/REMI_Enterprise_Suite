@@ -1,0 +1,2 @@
+455a48402ee5827eb9c6d3118e1ea3ca77f1954486fbd3fe15be2d75b608398b  MintBridge-XFCE-v1.0/presentation/index.html
+bb44016dd973a4b1b5ae58a83bce7f4eb091cbd0ccdc8eba1ec6eae291c6c33b  MintBridge.v1.0.3.zip
