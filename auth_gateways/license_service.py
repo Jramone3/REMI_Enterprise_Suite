@@ -1,6 +1,7 @@
 # license_service.py - Microservicio de Licenciamiento FastAPI (Producción)
 import os
 import logging
+import time
 from datetime import datetime, timedelta
 import hashlib
 from dotenv import load_dotenv
@@ -19,14 +20,26 @@ from auth_gateways.remi_tx_validator import validate_transaction
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("remi_license_service")
 
-# Definimos el ciclo de vida (Lifespan) moderno para FastAPI
+# Definimos el ciclo de vida (Lifespan) moderno con reintentos seguros para MongoDB
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- Código que se ejecuta al INICIAR la app ---
-    init_db()
-    logger.info("🚀 REMI Enterprise Suite - Búnker DB inicializado y restricciones de índices únicos aplicadas.")
-    print("🚀 REMI Enterprise Suite - Licencias iniciado correctamente.")
+    connected = False
+    for attempt in range(1, 11):
+        try:
+            init_db()
+            connected = True
+            logger.info("🚀 REMI Enterprise Suite - Búnker DB inicializado y restricciones de índices únicos aplicadas.")
+            print("🚀 REMI Enterprise Suite - Licencias iniciado correctamente.")
+            break
+        except Exception as e:
+            logger.warning(f"Intento {attempt}/10: Esperando a que MongoDB esté disponible... ({e})")
+            print(f"⏳ Esperando conexión a MongoDB (intento {attempt}/10)...")
+            time.sleep(2)
     
+    if not connected:
+        logger.error("⚠️ No se pudo establecer conexión inicial con MongoDB, pero la app iniciará de todos modos.")
+
     yield
     
     # --- Código que se ejecuta al APAGAR la app ---
