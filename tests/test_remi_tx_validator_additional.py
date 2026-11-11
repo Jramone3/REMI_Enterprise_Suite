@@ -9,6 +9,7 @@ class DummyReceipt(dict):
     pass
 
 class FakeW3Base:
+    chain_id = 8453
     def is_connected(self):
         return True
     def from_wei(self, v, unit):
