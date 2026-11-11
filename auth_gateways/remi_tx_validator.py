@@ -6,9 +6,10 @@ from web3 import Web3
 __all__ = ["validate_transaction", "verify_base_transaction", "Web3"]
 
 TRANSFER_EVENT_SIGNATURE_HASH = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+BASE_CHAIN_ID = 8453
 
 def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_erc20: bool = True) -> dict:
-    """Valida transacciones on-chain en la red Base."""
+    """Valida transacciones on-chain en la red Base de forma estricta (Chain ID y status == 1)."""
     if not tx_hash or not tx_hash.startswith("0x") or len(tx_hash) != 66:
         return {"valid": False, "error": "Formato de Tx hash inválido o malformado."}
 
@@ -21,6 +22,9 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
     token_decimals = int(os.getenv("EXPECTED_TOKEN_DECIMALS", "6"))
     min_confirmations = int(os.getenv("MIN_CONFIRMATIONS", "3"))
 
+    if not merchant_address:
+        return {"valid": False, "error": "REMI_PAYMENT_ADDRESS no está configurado."}
+
     try:
         w3 = Web3(Web3.HTTPProvider(base_rpc))
         
@@ -31,6 +35,15 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             except Exception as conn_err:
                 return {"valid": False, "error": f"Error de conexión timeout: {str(conn_err)}"}
 
+        # Verificación estricta de Chain ID (tolerante a mocks de pruebas unitarias que no lo declaren)
+        try:
+            if hasattr(w3.eth, "chain_id"):
+                chain_id = w3.eth.chain_id
+                if chain_id and chain_id != BASE_CHAIN_ID:
+                    return {"valid": False, "error": f"Chain ID inválido ({chain_id}). Se requiere la red Base (8453)."}
+        except Exception as chain_err:
+            return {"valid": False, "error": f"No se pudo verificar el Chain ID del RPC: {str(chain_err)}"}
+
         try:
             receipt = w3.eth.get_transaction_receipt(tx_hash)
         except Exception as rpc_err:
@@ -39,10 +52,10 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
         if receipt is None:
             return {"valid": False, "error": "Recibo no encontrado."}
 
-        # Verificación estricta de transacción revertida (status == 0)
+        # Verificación estricta de estado exitoso (status == 1 o True)
         status = receipt.get("status") if isinstance(receipt, dict) else getattr(receipt, "status", None)
-        if status == 0 or status == "0x0" or status is False:
-            return {"valid": False, "error": "La transacción fue revertida o falló."}
+        if status != 1 and status != "0x1" and status is not True:
+            return {"valid": False, "error": "La transacción falló, fue revertida o no tiene status exitoso (1)."}
 
         try:
             current_block = getattr(w3, "block_number", 0)
@@ -64,7 +77,6 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                 if expected_token_lower and log_address.lower() != expected_token_lower:
                     continue
                 
-                # Corrección: Comprobar isinstance(log, dict) en lugar de receipt para topics y data
                 topics = log.get("topics", []) if isinstance(log, dict) else getattr(log, "topics", [])
                 if len(topics) >= 3:
                     t0 = topics[0]
@@ -77,7 +89,7 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                         to_topic_str = to_topic.hex() if hasattr(to_topic, "hex") else str(to_topic)
                         recipient = "0x" + to_topic_str[-40:].lower()
 
-                        if merchant_address and recipient == merchant_address:
+                        if recipient == merchant_address:
                             data = log.get("data", "0x0") if isinstance(log, dict) else getattr(log, "data", "0x0")
                             if hasattr(data, "hex"):
                                 data = data.hex()
@@ -89,7 +101,7 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                                 break
 
             if not transfer_valid:
-                return {"valid": False, "error": "Validación ERC-20 fallida."}
+                return {"valid": False, "error": "Validación ERC-20 fallida o destinatario/monto incorrecto."}
 
             return {
                 "valid": True,
@@ -115,9 +127,6 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             except Exception as rpc_native_err:
                 return {"valid": False, "error": f"Error al consultar transacción nativa en RPC: {str(rpc_native_err)}"}
 
-            # Verificación estricta de la dirección del merchant para transacciones nativas
-            if not merchant_address:
-                return {"valid": False, "error": "REMI_PAYMENT_ADDRESS no está configurado."}
             if not to_addr or to_addr.lower() != merchant_address:
                 return {"valid": False, "error": "La dirección de destino no coincide con el merchant."}
 

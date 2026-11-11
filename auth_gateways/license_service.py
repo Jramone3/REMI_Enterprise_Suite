@@ -85,7 +85,7 @@ def verify_api_key(x_api_key: str = Header(..., description="API Key de Administ
 def health_check():
     return {"status": "online", "service": "REMI License Microservice"}
 
-# Endpoint público: Verifica licencia por correo
+# Endpoint público: Verifica licencia por correo (con enmascaramiento seguro de clave)
 @app.get("/licenses/verify/{email}")
 def verify_license(email: str):
     record = find_license_by_email(email)
@@ -95,9 +95,12 @@ def verify_license(email: str):
             detail="No se encontró ninguna licencia activa para este correo."
         )
     
+    full_key = record.get("license", "")
+    masked_key = "****-****-****-" + full_key[-4:] if len(full_key) >= 4 else "****"
+
     public_response = {
         "email": record.get("email"),
-        "license": record.get("license"),
+        "masked_license": masked_key,
         "tier": record.get("tier", "standard"),
         "status": record.get("status", "ACTIVE"),
         "expires": record.get("expires")
@@ -205,7 +208,7 @@ def issue_license(payload: LicenseRequest, api_key: str = Depends(verify_api_key
         "expires": fecha_expiracion.strftime("%Y-%m-%d")
     }
 
-# Endpoint webhook de Stripe con verificación criptográfica real de firma
+# Endpoint webhook de Stripe blindado (con validación de pago, importes e idempotencia estricta)
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
     import stripe
@@ -228,27 +231,48 @@ async def stripe_webhook(request: Request):
     event_data = event.get("data", {}).get("object", {})
 
     if event_type == "checkout.session.completed":
+        # Validación estricta de pago completado
+        payment_status = event_data.get("payment_status")
+        if payment_status != "paid":
+            raise HTTPException(status_code=400, detail=f"Pago no completado. Estado: {payment_status}")
+
+        # Validación de importe (mínimo 499 USD o equivalente en centavos)
+        expected_amount = float(os.getenv("EXPECTED_LICENSE_AMOUNT", "499.0")) * 100
+        amount_total = event_data.get("amount_total", 0)
+        if amount_total < expected_amount:
+            raise HTTPException(status_code=400, detail=f"Monto insuficiente: {amount_total/100.0}. Se esperaba al menos {expected_amount/100.0}")
+
+        session_id = event_data.get("id")
         customer_email = event_data.get("customer_email") or event_data.get("customer_details", {}).get("email")
         customer_name = event_data.get("customer_details", {}).get("name", "Cliente Enterprise")
         
+        if not customer_email:
+            raise HTTPException(status_code=400, detail="No se encontró el correo del cliente en la sesión de Stripe.")
+
         fecha_expiracion = datetime.now() + timedelta(days=365)
-        raw_key = f"REMI-FIAT-{customer_email}-{datetime.utcnow().isoformat()}"
+        raw_key = f"REMI-FIAT-{customer_email}-{session_id}"
         hash_key = hashlib.sha256(raw_key.encode()).hexdigest()[:24].upper()
         licencia_final = f"REMI-FIAT-ANNUAL-{hash_key}"
 
         license_record = {
             "email": customer_email,
-            "tx_hash": "STRIPE_FIAT_CHECKOUT",
+            "tx_hash": f"STRIPE_SESSION_{session_id}",  # Idempotencia única por sesión
             "license": licencia_final,
             "issued_at": datetime.utcnow().isoformat(),
             "expires": fecha_expiracion.strftime("%Y-%m-%d"),
             "tier": "enterprise",
             "status": "ACTIVE",
-            "client_name": customer_name
+            "client_name": customer_name,
+            "gateway": "stripe"
         }
 
-        save_license(license_record)
-        logger.info(f"[LICENCIA STRIPE EMITIDA]: {customer_email} - Clave: {licencia_final}")
+        db_result = save_license(license_record)
+        if not db_result.get("ok"):
+            logger.error(f"Fallo al persistir licencia de Stripe en DB: {db_result.get('error')}")
+            # Forzar HTTP 500 para que Stripe reintente el webhook si la DB falla
+            raise HTTPException(status_code=500, detail="Error crítico al persistir la licencia en base de datos.")
+
+        logger.info(f"[LICENCIA STRIPE EMITIDA]: {customer_email} - Sesión: {session_id}")
 
         return {
             "status": "PROCESSED",
