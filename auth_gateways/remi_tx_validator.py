@@ -9,7 +9,7 @@ TRANSFER_EVENT_SIGNATURE_HASH = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a
 BASE_CHAIN_ID = 8453
 
 def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_erc20: bool = True) -> dict:
-    """Valida transacciones on-chain en la red Base con control estricto y purista de Chain ID."""
+    """Valida transacciones on-chain en la red Base con control estricto de Chain ID y lectura correcta de bloques."""
     if not tx_hash or not tx_hash.startswith("0x") or len(tx_hash) != 66:
         return {"valid": False, "error": "Formato de Tx hash inválido o malformado."}
 
@@ -35,7 +35,7 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             except Exception as conn_err:
                 return {"valid": False, "error": f"Error de conexión timeout: {str(conn_err)}"}
 
-        # Verificación purista, estricta y sin bypasses de Chain ID
+        # Verificación estricta de Chain ID
         try:
             if not hasattr(w3.eth, "chain_id"):
                 return {"valid": False, "error": "El proveedor RPC no expone chain_id."}
@@ -57,14 +57,20 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
         if status != 1 and status != "0x1" and status is not True:
             return {"valid": False, "error": "La transacción falló, fue revertida o no tiene status exitoso (1)."}
 
+        # Corrección robusta: consulta estándar w3.eth.block_number con fallback seguro
         try:
-            current_block = getattr(w3, "block_number", 0)
+            current_block = 0
+            if hasattr(w3, "eth") and hasattr(w3.eth, "block_number"):
+                current_block = w3.eth.block_number
+            elif hasattr(w3, "block_number"):
+                current_block = w3.block_number
+
             tx_block = receipt.get("blockNumber") if isinstance(receipt, dict) else getattr(receipt, "blockNumber", 0)
             confirmations = current_block - tx_block
             if confirmations < min_confirmations:
                 return {"valid": False, "error": "Confirmaciones insuficientes."}
-        except Exception:
-            return {"valid": False, "error": "Error al verificar confirmaciones."}
+        except Exception as block_err:
+            return {"valid": False, "error": f"Error al verificar confirmaciones: {str(block_err)}"}
 
         if is_erc20:
             transfer_valid = False
