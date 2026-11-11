@@ -44,7 +44,7 @@ jobs:
       env:
         PYTHONPATH: ".:auth_gateways"
       run: |
-        pytest tests/ --cov=auth_gateways --cov-report=term-missing --cov-fail-under=35 -p no:pytest_ethereum
+        pytest tests/ --cov=auth_gateways --cov-report=term-missing --cov-fail-under=38 -p no:pytest_ethereum
 
     - name: Build Docker Image
       run: |
