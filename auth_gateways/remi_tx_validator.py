@@ -60,12 +60,12 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             expected_token_lower = expected_token.lower() if expected_token else ""
 
             for log in logs:
-                # Corrección: Comprobar isinstance(log, dict) en lugar de receipt
                 log_address = log.get("address", "") if isinstance(log, dict) else getattr(log, "address", "")
                 if expected_token_lower and log_address.lower() != expected_token_lower:
                     continue
                 
-                topics = log.get("topics", []) if isinstance(receipt, dict) else getattr(log, "topics", [])
+                # Corrección: Comprobar isinstance(log, dict) en lugar de receipt para topics y data
+                topics = log.get("topics", []) if isinstance(log, dict) else getattr(log, "topics", [])
                 if len(topics) >= 3:
                     t0 = topics[0]
                     t0_hex = t0.hex() if hasattr(t0, "hex") else str(t0)
@@ -78,7 +78,7 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                         recipient = "0x" + to_topic_str[-40:].lower()
 
                         if merchant_address and recipient == merchant_address:
-                            data = log.get("data", "0x0") if isinstance(receipt, dict) else getattr(log, "data", "0x0")
+                            data = log.get("data", "0x0") if isinstance(log, dict) else getattr(log, "data", "0x0")
                             if hasattr(data, "hex"):
                                 data = data.hex()
                             token_units = int(data, 16)
