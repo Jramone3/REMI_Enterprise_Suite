@@ -26,17 +26,18 @@ def ping_db():
     client.admin.command("ping")
 
 def init_db():
-    """Comprueba MongoDB mediante ping, limpia índices obsoletos históricos y asegura unicidad por tx_hash."""
+    """Comprueba MongoDB mediante ping, elimina de forma estricta (fail-fast) cualquier índice obsoleto y asegura tx_hash."""
     ping_db()
     db = get_db()
     
-    # Migración preventiva automática: elimina el índice de email si existiera de versiones anteriores
+    # Migración estricta fail-fast: si el índice obsoleto existe, debe eliminarse sin excepciones silenciadas
     existing_indexes = db.licenses.index_information()
     if "email_1" in existing_indexes:
-        try:
-            db.licenses.drop_index("email_1")
-        except Exception:
-            pass
+        db.licenses.drop_index("email_1")
+        # Doble verificación estricta post-eliminación
+        refreshed_indexes = db.licenses.index_information()
+        if "email_1" in refreshed_indexes:
+            raise RuntimeError("Fallo crítico de migración: No se pudo eliminar el índice obsoleto 'email_1' de la colección licenses.")
 
     # Unicidad estricta basada exclusivamente en el identificador de pago / transacción
     db.licenses.create_index("tx_hash", unique=True)
