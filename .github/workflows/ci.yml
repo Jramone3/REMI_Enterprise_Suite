@@ -53,13 +53,13 @@ jobs:
     - name: Integration Test Docker Container
       run: |
         docker run -d --network host -e MONGO_URI="mongodb://localhost:27017" --name remi-test-container remi-enterprise:latest
-        for i in {1..15}; do
+        for i in {1..30}; do
           if curl -s http://localhost:5000/; then
             echo "Container is up!"
             break
           fi
           echo "Waiting for container..."
-          sleep 2
+          sleep 3
         done
         if ! curl -f http://localhost:5000/; then
           echo "=== CONTAINER LOGS ==="
