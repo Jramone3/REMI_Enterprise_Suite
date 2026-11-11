@@ -60,13 +60,13 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             expected_token_lower = expected_token.lower() if expected_token else ""
 
             for log in logs:
-                log_address = log.get("address", "") if isinstance(receipt, dict) else getattr(log, "address", "")
+                # Corrección: Comprobar isinstance(log, dict) en lugar de receipt
+                log_address = log.get("address", "") if isinstance(log, dict) else getattr(log, "address", "")
                 if expected_token_lower and log_address.lower() != expected_token_lower:
                     continue
                 
                 topics = log.get("topics", []) if isinstance(receipt, dict) else getattr(log, "topics", [])
                 if len(topics) >= 3:
-                    # Normalización robusta de topics[0] a cadena hex para evitar fallos de tipo HexBytes
                     t0 = topics[0]
                     t0_hex = t0.hex() if hasattr(t0, "hex") else str(t0)
                     if not t0_hex.startswith("0x"):
@@ -100,7 +100,6 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                 "network": "Base"
             }
         else:
-            # Corrección crítica: Eliminado el fallback inseguro que aprobaba transacciones si el RPC fallaba
             try:
                 tx_info = w3.eth.get_transaction(tx_hash) if hasattr(w3, "eth") and hasattr(w3.eth, "get_transaction") else {}
                 if not tx_info:
@@ -116,7 +115,10 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             except Exception as rpc_native_err:
                 return {"valid": False, "error": f"Error al consultar transacción nativa en RPC: {str(rpc_native_err)}"}
 
-            if merchant_address and to_addr and to_addr.lower() != merchant_address:
+            # Verificación estricta de la dirección del merchant para transacciones nativas
+            if not merchant_address:
+                return {"valid": False, "error": "REMI_PAYMENT_ADDRESS no está configurado."}
+            if not to_addr or to_addr.lower() != merchant_address:
                 return {"valid": False, "error": "La dirección de destino no coincide con el merchant."}
 
             if actual_amount < expected_min_amount:
