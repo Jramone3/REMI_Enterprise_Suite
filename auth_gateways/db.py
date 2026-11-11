@@ -26,10 +26,19 @@ def ping_db():
     client.admin.command("ping")
 
 def init_db():
-    """Comprueba MongoDB mediante ping y asegura la unicidad estricta por transacción/sesión, permitiendo renovación de correos."""
+    """Comprueba MongoDB mediante ping, limpia índices obsoletos históricos y asegura unicidad por tx_hash."""
     ping_db()
     db = get_db()
-    # Unicidad estricta e infalible basada en el identificador de pago (tx_hash / session_id)
+    
+    # Migración preventiva automática: elimina el índice de email si existiera de versiones anteriores
+    existing_indexes = db.licenses.index_information()
+    if "email_1" in existing_indexes:
+        try:
+            db.licenses.drop_index("email_1")
+        except Exception:
+            pass
+
+    # Unicidad estricta basada exclusivamente en el identificador de pago / transacción
     db.licenses.create_index("tx_hash", unique=True)
 
 def save_license(license_data: dict) -> dict:
@@ -46,7 +55,6 @@ def find_license_by_email(email: str):
     db = get_db()
     if db is None:
         return None
-    # Si hay múltiples licencias para el mismo correo, retorna la más reciente activa
     return db.licenses.find_one({"email": email}, sort=[("issued_at", -1)])
 
 def find_license_by_tx_hash(tx_hash: str):
