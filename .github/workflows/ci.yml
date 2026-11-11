@@ -53,14 +53,24 @@ jobs:
     - name: Integration Test Docker Container
       run: |
         docker run -d --network host -e MONGO_URI="mongodb://localhost:27017" --name remi-test-container remi-enterprise:latest
+    
+        # Garantizar limpieza automática ante cualquier salida (éxito o error)
+        cleanup() {
+          echo "=== LIMPIEZA DE CONTENEDOR ==="
+          docker stop remi-test-container || true
+          docker rm remi-test-container || true
+        }
+        trap cleanup EXIT
+
         for i in {1..30}; do
           if curl -s http://localhost:5000/; then
             echo "Container is up!"
             break
           fi
-          echo "Waiting for container..."
+          echo "Waiting for container (attempt $i/30)..."
           sleep 3
         done
+
         if ! curl -f http://localhost:5000/; then
           echo "=== CONTAINER LOGS ==="
           docker logs remi-test-container
