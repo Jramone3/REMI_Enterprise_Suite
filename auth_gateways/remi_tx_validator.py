@@ -65,21 +65,28 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                     continue
                 
                 topics = log.get("topics", []) if isinstance(receipt, dict) else getattr(log, "topics", [])
-                if len(topics) >= 3 and topics[0] == TRANSFER_EVENT_SIGNATURE_HASH:
-                    to_topic = topics[2]
-                    to_topic_str = to_topic.hex() if hasattr(to_topic, "hex") else str(to_topic)
-                    recipient = "0x" + to_topic_str[-40:].lower()
+                if len(topics) >= 3:
+                    # Normalización robusta de topics[0] a cadena hex para evitar fallos de tipo HexBytes
+                    t0 = topics[0]
+                    t0_hex = t0.hex() if hasattr(t0, "hex") else str(t0)
+                    if not t0_hex.startswith("0x"):
+                        t0_hex = "0x" + t0_hex
 
-                    if merchant_address and recipient == merchant_address:
-                        data = log.get("data", "0x0") if isinstance(receipt, dict) else getattr(log, "data", "0x0")
-                        if hasattr(data, "hex"):
-                            data = data.hex()
-                        token_units = int(data, 16)
-                        actual_amount = token_units / (10 ** token_decimals)
+                    if t0_hex.lower() == TRANSFER_EVENT_SIGNATURE_HASH.lower():
+                        to_topic = topics[2]
+                        to_topic_str = to_topic.hex() if hasattr(to_topic, "hex") else str(to_topic)
+                        recipient = "0x" + to_topic_str[-40:].lower()
 
-                        if actual_amount >= expected_min_amount:
-                            transfer_valid = True
-                            break
+                        if merchant_address and recipient == merchant_address:
+                            data = log.get("data", "0x0") if isinstance(receipt, dict) else getattr(log, "data", "0x0")
+                            if hasattr(data, "hex"):
+                                data = data.hex()
+                            token_units = int(data, 16)
+                            actual_amount = token_units / (10 ** token_decimals)
+
+                            if actual_amount >= expected_min_amount:
+                                transfer_valid = True
+                                break
 
             if not transfer_valid:
                 return {"valid": False, "error": "Validación ERC-20 fallida."}
@@ -93,18 +100,21 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
                 "network": "Base"
             }
         else:
+            # Corrección crítica: Eliminado el fallback inseguro que aprobaba transacciones si el RPC fallaba
             try:
                 tx_info = w3.eth.get_transaction(tx_hash) if hasattr(w3, "eth") and hasattr(w3.eth, "get_transaction") else {}
+                if not tx_info:
+                    return {"valid": False, "error": "No se pudo obtener la información de la transacción nativa."}
+                
                 to_addr = tx_info.get("to") if isinstance(tx_info, dict) else getattr(tx_info, "to", "")
-                value_wei = tx_info.get("value", int(expected_min_amount * 1e18)) if isinstance(tx_info, dict) else getattr(tx_info, "value", int(expected_min_amount * 1e18))
+                value_wei = tx_info.get("value", 0) if isinstance(tx_info, dict) else getattr(tx_info, "value", 0)
                 
                 if hasattr(w3, "from_wei"):
                     actual_amount = w3.from_wei(value_wei, 'ether')
                 else:
                     actual_amount = value_wei / 1e18
-            except Exception:
-                to_addr = merchant_address
-                actual_amount = expected_min_amount
+            except Exception as rpc_native_err:
+                return {"valid": False, "error": f"Error al consultar transacción nativa en RPC: {str(rpc_native_err)}"}
 
             if merchant_address and to_addr and to_addr.lower() != merchant_address:
                 return {"valid": False, "error": "La dirección de destino no coincide con el merchant."}
