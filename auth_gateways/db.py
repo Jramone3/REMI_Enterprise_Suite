@@ -1,13 +1,11 @@
 # db.py
 import os
 from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
 
 _client = None
 _db = None
 
 def get_client():
-    """Retorna el cliente MongoClient para compatibilidad con tests."""
     global _client
     mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     if _client is None:
@@ -15,7 +13,6 @@ def get_client():
     return _client
 
 def get_db():
-    """Retorna la instancia de la base de datos MongoDB."""
     global _db
     if _db is not None:
         return _db
@@ -24,18 +21,19 @@ def get_db():
     _db = client[db_name]
     return _db
 
+def ping_db():
+    """Ejecuta un ping real al servidor de MongoDB."""
+    client = get_client()
+    client.admin.command("ping")
+
 def init_db():
-    """Inicializa la base de datos y aplica índices únicos."""
+    """Comprueba MongoDB mediante ping y crea índices únicos propagando formalmente cualquier error."""
+    ping_db()
     db = get_db()
-    if db is not None:
-        try:
-            db.licenses.create_index("tx_hash", unique=True)
-            db.licenses.create_index("email", unique=True)
-        except Exception as e:
-            print(f"Advertencia al crear índices en MongoDB: {e}")
+    db.licenses.create_index("tx_hash", unique=True)
+    db.licenses.create_index("email", unique=True)
 
 def save_license(license_data: dict) -> dict:
-    """Guarda una licencia asegurando unicidad."""
     db = get_db()
     if db is None:
         return {"ok": False, "error": "Base de datos no disponible"}
@@ -50,6 +48,12 @@ def find_license_by_email(email: str):
     if db is None:
         return None
     return db.licenses.find_one({"email": email})
+
+def find_license_by_tx_hash(tx_hash: str):
+    db = get_db()
+    if db is None:
+        return None
+    return db.licenses.find_one({"tx_hash": tx_hash})
 
 def save_audit_log(log_entry: dict):
     db = get_db()

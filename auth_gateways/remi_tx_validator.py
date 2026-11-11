@@ -9,7 +9,7 @@ TRANSFER_EVENT_SIGNATURE_HASH = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a
 BASE_CHAIN_ID = 8453
 
 def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_erc20: bool = True) -> dict:
-    """Valida transacciones on-chain en la red Base con control estricto de Chain ID."""
+    """Valida transacciones on-chain en la red Base con control estricto y purista de Chain ID."""
     if not tx_hash or not tx_hash.startswith("0x") or len(tx_hash) != 66:
         return {"valid": False, "error": "Formato de Tx hash inválido o malformado."}
 
@@ -35,21 +35,15 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             except Exception as conn_err:
                 return {"valid": False, "error": f"Error de conexión timeout: {str(conn_err)}"}
 
-        # Verificación estricta de Chain ID (Cerrada en prod, tolerante con mocks en pytest)
+        # Verificación purista, estricta y sin bypasses de Chain ID
         try:
-            if hasattr(w3.eth, "chain_id"):
-                chain_id = w3.eth.chain_id
-                if chain_id != BASE_CHAIN_ID:
-                    return {"valid": False, "error": f"Chain ID inválido ({chain_id}). Se requiere estrictamente la red Base (8453)."}
-            else:
-                if os.getenv("PYTEST_CURRENT_TEST"):
-                    # Permitir mocks de tests antiguos que no simulan chain_id
-                    pass
-                else:
-                    return {"valid": False, "error": "El proveedor RPC no expone chain_id."}
+            if not hasattr(w3.eth, "chain_id"):
+                return {"valid": False, "error": "El proveedor RPC no expone chain_id."}
+            chain_id = w3.eth.chain_id
+            if chain_id != BASE_CHAIN_ID:
+                return {"valid": False, "error": f"Chain ID inválido ({chain_id}). Se requiere estrictamente la red Base (8453)."}
         except Exception as chain_err:
-            if not os.getenv("PYTEST_CURRENT_TEST"):
-                return {"valid": False, "error": f"No se pudo verificar el Chain ID: {chain_err}"}
+            return {"valid": False, "error": f"No se pudo verificar el Chain ID: {chain_err}"}
 
         try:
             receipt = w3.eth.get_transaction_receipt(tx_hash)
