@@ -9,13 +9,13 @@ TRANSFER_EVENT_SIGNATURE_HASH = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a
 BASE_CHAIN_ID = 8453
 
 def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_erc20: bool = True) -> dict:
-    """Valida transacciones on-chain en la red Base de forma estricta (Chain ID y status == 1)."""
+    """Valida transacciones on-chain en la red Base."""
     if not tx_hash or not tx_hash.startswith("0x") or len(tx_hash) != 66:
         return {"valid": False, "error": "Formato de Tx hash inválido o malformado."}
 
     expected_token = os.getenv("EXPECTED_TOKEN_ADDRESS")
     if is_erc20 and not expected_token:
-        return {"valid": False, "error": "EXPECTED_TOKEN_ADDRESS no configurado para transferencia ERC-20."}
+        return {"valid": False, "error": "EXPECTED_TOKEN_ADDRESS no configurado para ERC-20."}
 
     base_rpc = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
     merchant_address = os.getenv("REMI_PAYMENT_ADDRESS", "").lower()
@@ -35,14 +35,14 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
             except Exception as conn_err:
                 return {"valid": False, "error": f"Error de conexión timeout: {str(conn_err)}"}
 
-        # Verificación estricta de Chain ID (tolerante a mocks de pruebas unitarias que no lo declaren)
+        # Verificación estricta de Chain ID (tolerante a mocks unitarios antiguos)
         try:
             if hasattr(w3.eth, "chain_id"):
                 chain_id = w3.eth.chain_id
                 if chain_id and chain_id != BASE_CHAIN_ID:
                     return {"valid": False, "error": f"Chain ID inválido ({chain_id}). Se requiere la red Base (8453)."}
         except Exception as chain_err:
-            return {"valid": False, "error": f"No se pudo verificar el Chain ID del RPC: {str(chain_err)}"}
+            return {"valid": False, "error": f"Fallo al verificar el Chain ID: {str(chain_err)}"}
 
         try:
             receipt = w3.eth.get_transaction_receipt(tx_hash)
@@ -52,7 +52,6 @@ def validate_transaction(tx_hash: str, expected_min_amount: float = 499.0, is_er
         if receipt is None:
             return {"valid": False, "error": "Recibo no encontrado."}
 
-        # Verificación estricta de estado exitoso (status == 1 o True)
         status = receipt.get("status") if isinstance(receipt, dict) else getattr(receipt, "status", None)
         if status != 1 and status != "0x1" and status is not True:
             return {"valid": False, "error": "La transacción falló, fue revertida o no tiene status exitoso (1)."}
