@@ -1,1 +1,0 @@
-Activación de clúster Atlas como memoria estructurada de REMI

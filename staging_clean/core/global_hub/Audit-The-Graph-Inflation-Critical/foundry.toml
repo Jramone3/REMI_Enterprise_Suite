@@ -1,8 +1,0 @@
-[profile.default]
-evm_version = "istanbul" # Versión más compatible con Solidity 0.7.x
-optimizer = true
-optimizer_runs = 200
-
-# Esta configuración es clave para proyectos "híbridos"
-[profile.default.solc_config]
-# No forcemos una versión global, dejemos que cada archivo use su pragma
