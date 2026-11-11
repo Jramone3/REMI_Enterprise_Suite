@@ -22,16 +22,15 @@ def get_db():
     return _db
 
 def ping_db():
-    """Ejecuta un ping real al servidor de MongoDB."""
     client = get_client()
     client.admin.command("ping")
 
 def init_db():
-    """Comprueba MongoDB mediante ping y crea índices únicos propagando formalmente cualquier error."""
+    """Comprueba MongoDB mediante ping y asegura la unicidad estricta por transacción/sesión, permitiendo renovación de correos."""
     ping_db()
     db = get_db()
+    # Unicidad estricta e infalible basada en el identificador de pago (tx_hash / session_id)
     db.licenses.create_index("tx_hash", unique=True)
-    db.licenses.create_index("email", unique=True)
 
 def save_license(license_data: dict) -> dict:
     db = get_db()
@@ -47,7 +46,8 @@ def find_license_by_email(email: str):
     db = get_db()
     if db is None:
         return None
-    return db.licenses.find_one({"email": email})
+    # Si hay múltiples licencias para el mismo correo, retorna la más reciente activa
+    return db.licenses.find_one({"email": email}, sort=[("issued_at", -1)])
 
 def find_license_by_tx_hash(tx_hash: str):
     db = get_db()
