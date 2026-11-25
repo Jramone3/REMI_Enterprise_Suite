@@ -1,0 +1,28 @@
+MintBridge XFCE v1.0 – Estructura técnica validada
+Autor: "jramonrivasg"
+Fecha: 29/08/2025
+
+Raíz del proyecto:
+├── instrucciones.txt         → Guía de uso y ejecución
+├── estructura.txt            → Este archivo: mapa técnico del paquete
+├── README.md                 → Descripción general del proyecto
+├── LICENSE.txt               → Licencia de uso y distribución
+
+Carpeta /scripts:
+├── Migracion.ps1             → Exportación y respaldo de datos
+├── Blindaje.ps1              → Cifrado y protección de documentos
+├── Verificacion.ps1          → Validación de firmas digitales
+├── ControlEstructura.ps1     → Auditoría de carpetas y archivos clave
+
+Carpeta /firma:
+├── *.sig                     → Firmas digitales de los scripts
+├── jramonrivasg_publickey.asc → Clave pública para verificación
+├── verificacion.txt          → Registro de validación técnica
+
+Carpeta /documentacion:
+└── visuales_cifrados/        → Material gráfico complementario
+
+Notas:
+- Todos los scripts han sido firmados con GPG
+- No se incluyen archivos temporales, duplicados ni residuos
+- Validado en hardware legacy real

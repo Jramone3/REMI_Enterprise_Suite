@@ -1,0 +1,9 @@
+=====================================================================
+REMI-IA - BITÁCORA DE SOBERANÍA - CONSOLIDADO DE ERRORES (ENERO 2026)
+=====================================================================
+1. CAUSA RAÍZ 400: Xano envió payloads JSON serializados como 'application/x-www-form-urlencoded'.
+2. CAUSA RAÍZ 404: Incompatibilidad entre el string del modelo (gemini-1.5-flash) y el prefijo de versión del endpoint (v1 vs v1beta).
+3. CAUSA RAÍZ NULL: Colapso del flujo de captura de excepciones en el backend intermedio.
+
+ESTADO DE RESOLUCIÓN: Claves recuperadas, endpoints mapeados para integración directa desde la API local en Flask (remi_servidor_api.py).
+=====================================================================

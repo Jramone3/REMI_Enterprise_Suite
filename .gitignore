@@ -1,0 +1,33 @@
+# Python & Entornos
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.coverage
+.env
+
+# Builds y paquetes
+build/
+dist/
+*.spec
+node_modules/
+**/node_modules/
+
+# Directorios de Staging y Submódulos anidados
+staging_clean/
+staging_pure/
+dist_gumroad/
+REMI_Enterprise_Suite/
+auditor_ciberinteligencia/dist/
+auditor_ciberinteligencia/build/
+auditor_ciberinteligencia/reports/
+auditor_ciberinteligencia/feeds/
+core/auditoria_c/
+core/global_hub/
+
+# Logs y temporal
+*.log
+*.sqlite
+**/node_modules/
+core/global_hub/Audit-The-Graph-Inflation-Critical/
+core/global_hub/Auditoria-Lido-Remi_Bunker/

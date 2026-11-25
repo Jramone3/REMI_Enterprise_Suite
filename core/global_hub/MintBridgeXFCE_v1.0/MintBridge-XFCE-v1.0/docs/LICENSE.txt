@@ -1,0 +1,9 @@
+# Licencia técnica comunitaria — MintBridge XFCE
+
+Este proyecto es distribuido para fines educativos, técnicos y comunitarios.
+
+- La autoría `"jramonrivasg"` debe mantenerse intacta en todo fork, clon o derivado.
+- Se permite su uso, modificación y redistribución bajo condiciones de fidelidad técnica.
+- Toda imagen, script o documento firmado digitalmente no debe ser alterado sin consentimiento.
+
+Distribuido bajo los principios de colaboración abierta y verificación reproducible.
