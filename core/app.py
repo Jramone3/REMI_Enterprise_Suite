@@ -278,42 +278,51 @@ contract RemiBunkerLicense {
         """, language="solidity")
 
     st.markdown("---")
-    st.subheader("📝 Registro Manual en Búnker MongoDB")
-    with st.form("new_license_form"):
-        col_a, col_b = st.columns(2)
-        with col_a:
-            admin_email = st.text_input("Correo del Cliente:")
-            client_name = st.text_input("Nombre de la Empresa / Cliente:")
-            license_tier = st.selectbox("Nivel (Tier):", ["Enterprise 100/100", "Enterprise Standard", "Trial / PoC"])
-        with col_b:
-            expires_date = st.date_input("Fecha de Expiración:")
-            status_opt = st.selectbox("Estado de la Licencia:", ["Active", "Suspended", "Expired"])
-            custom_hash = st.text_input("Hash Personalizado (Opcional):", placeholder="Deja en blanco para auto-generar")
+    st.subheader("📝 Registro Manual en Búnker MongoDB (Acceso Restringido)")
+    configured_admin_key = os.getenv("REMI_ADMIN_KEY", "")
+    if not configured_admin_key:
+        st.error("🔒 Operación administrativa bloqueada en servidor: configura `REMI_ADMIN_KEY` en el entorno.")
+    else:
+        with st.form("new_license_form"):
+            admin_key_input = st.text_input("Clave de Administrador (REMI_ADMIN_KEY):", type="password")
+            col_a, col_b = st.columns(2)
+            with col_a:
+                admin_email = st.text_input("Correo del Cliente:")
+                client_name = st.text_input("Nombre de la Empresa / Cliente:")
+                license_tier = st.selectbox("Nivel (Tier):", ["Enterprise 100/100", "Enterprise Standard", "Trial / PoC"])
+            with col_b:
+                expires_date = st.date_input("Fecha de Expiración:")
+                status_opt = st.selectbox("Estado de la Licencia:", ["Active", "Suspended", "Expired"])
+                custom_hash = st.text_input("Hash Personalizado (Opcional):", placeholder="Deja en blanco para auto-generar")
 
-        submit_btn = st.form_submit_button("🔑 Registrar / Actualizar Licencia en Búnker")
+            submit_btn = st.form_submit_button("🔑 Registrar / Actualizar Licencia en Búnker")
 
-    if submit_btn:
-        if admin_email:
-            try:
-                with st.spinner("Escribiendo registro en el Búnker MongoDB..."):
-                    client_db = MongoClient(MONGO_URI)
-                    db = client_db.get_database(os.getenv("REMI_DB_NAME", "remi_enterprise"))
-                    collection = db["licenses"]
-                    
-                    hash_final = custom_hash if custom_hash else f"REMI-ENT-{admin_email.split('@')[0].upper()}-2026"
-                    
-                    payload = {
-                        "email": admin_email.strip().lower(),
-                        "client_name": client_name.strip() if client_name else "Cliente Enterprise",
-                        "status": status_opt,
-                        "tier": license_tier,
-                        "expires": str(expires_date),
-                        "license_hash": hash_final
-                    }
-                    
-                    collection.update_one({"email": admin_email.strip().lower()}, {"$set": payload}, upsert=True)
-                    st.success(f"✅ Licencia registrada exitosamente para `{admin_email}` con hash `{hash_final}`.")
-            except Exception as e:
-                st.error(f"❌ Error al escribir en el Búnker: {e}")
-        else:
-            st.warning("⚠️ Debes proporcionar un correo electrónico válido.")
+        if submit_btn:
+            import hmac
+            key_ok = bool(admin_key_input) and hmac.compare_digest(admin_key_input, configured_admin_key)
+            if not key_ok:
+                st.error("🚫 Acceso denegado: clave de administrador inválida.")
+            elif not admin_email:
+                st.warning("⚠️ Debes proporcionar un correo electrónico válido.")
+            else:
+                try:
+                    with st.spinner("Escribiendo registro en el Búnker MongoDB..."):
+                        client_db = MongoClient(MONGO_URI)
+                        db = client_db.get_database(os.getenv("REMI_DB_NAME", "remi_enterprise"))
+                        collection = db["licenses"]
+
+                        hash_final = custom_hash if custom_hash else f"REMI-ENT-{admin_email.split('@')[0].upper()}-2026"
+
+                        payload = {
+                            "email": admin_email.strip().lower(),
+                            "client_name": client_name.strip() if client_name else "Cliente Enterprise",
+                            "status": status_opt,
+                            "tier": license_tier,
+                            "expires": str(expires_date),
+                            "license_hash": hash_final
+                        }
+
+                        collection.update_one({"email": admin_email.strip().lower()}, {"$set": payload}, upsert=True)
+                        st.success(f"✅ Licencia registrada exitosamente para `{admin_email}` con hash `{hash_final}`.")
+                except Exception as e:
+                    st.error(f"❌ Error al escribir en el Búnker: {e}")

@@ -2,9 +2,9 @@ name: REMI Core CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, clean/v1.0 ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, clean/v1.0 ]
 
 jobs:
   build-and-test:

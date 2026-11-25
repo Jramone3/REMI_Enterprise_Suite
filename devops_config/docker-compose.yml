@@ -1,19 +1,24 @@
-version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: devops_config/Dockerfile
     restart: unless-stopped
     ports:
-      - "8501:8501"
+      - "5000:5000"
     environment:
+      - PORT=5000
       - MONGO_URI=mongodb://mongo:27017/
       - REMI_DB_NAME=remi_enterprise
+      - OLLAMA_URL=http://ollama:11434
       - LLM_HOST=http://ollama:11434
       - BASE_RPC_URL=${BASE_RPC_URL:-https://mainnet.base.org}
       - REMI_PAYMENT_ADDRESS=${REMI_PAYMENT_ADDRESS}
       - EXPECTED_TOKEN_ADDRESS=${EXPECTED_TOKEN_ADDRESS:-}
       - EXPECTED_TOKEN_DECIMALS=${EXPECTED_TOKEN_DECIMALS:-6}
+      - MIN_CONFIRMATIONS=${MIN_CONFIRMATIONS:-3}
+      - REMI_ADMIN_KEY=${REMI_ADMIN_KEY:-}
     depends_on:
       - mongo
       - ollama
