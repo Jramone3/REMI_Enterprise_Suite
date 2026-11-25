@@ -28,15 +28,17 @@ jobs:
 
     - name: Install Dependencies
       run: |
+        which python
+        python --version
         python -m pip install --upgrade pip
+        python -m pip install pytest pytest-cov pytest-mock fastapi httpx openai pydantic mongomock mcp pymongo python-dotenv web3 requests
         for req in requirements.txt requirements-dev.txt devops_config/requirements.txt devops_config/requirements-dev.txt; do
-          if [ -f "$req" ]; then pip install -r "$req" || true; fi
+          if [ -f "$req" ]; then python -m pip install -r "$req" || true; fi
         done
-        pip install pytest pytest-cov pytest-mock fastapi httpx openai pydantic mongomock mcp pymongo python-dotenv web3 requests
 
     - name: Run Tests with Coverage Gate (45%)
       run: |
-        PYTHONPATH=.:auth_gateways pytest -v
+        PYTHONPATH=.:auth_gateways python -m pytest -v
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
