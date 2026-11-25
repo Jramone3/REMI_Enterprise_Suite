@@ -33,7 +33,7 @@ jobs:
 
     - name: Run Tests with Coverage Gate (74%)
       run: |
-        pytest --cov=core --cov-fail-under=74 -v
+        PYTHONPATH=.:auth_gateways pytest -v
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4

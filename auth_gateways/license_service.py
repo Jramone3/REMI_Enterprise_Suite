@@ -60,6 +60,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+@app.get("/", tags=["Health"])
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {"status": "online", "service": "REMI License Microservice", "version": "2.7.0"}
+
+
 class LicenseRequest(BaseModel):
     email: str
     tx_hash: str
