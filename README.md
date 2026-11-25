@@ -11,7 +11,14 @@
 
 Framework multi-agente basado en FastAPI, MongoDB y Docker, diseñado para la automatización de procesos backend, auditorías de ciberinteligencia, pasarelas de autenticación y verificación de licencias on-chain.
 
-### 📂 Estructura del Repositorio
+### 🌐 Ecosistema en Vivo / Live Ecosystem
+
+| Aplicación / App | Descripción / Description | Acceso Directo / Live Link |
+| :--- | :--- | :--- |
+| **REMI Enterprise Suite** | Vitrina interactiva del motor multi-agente (Render) / Interactive multi-agent showcase | [Abrir Demo / Launch App](https://remi-enterprise-suite.onrender.com/) |
+| **REMI-Lite Audit Portable** | Binario autónomo Linux x86_64 para auditoría CVE y SHA-256 (Vercel) / Standalone Linux CVE audit | [Portal & Descarga / Download](https://remi-lite-audit-secure.vercel.app) |
+
+## 📂 Estructura del Repositorio
 ```text
 REMI_Enterprise_Suite/
 ├── .github/workflows/ci.yml     # Pipeline de integración continua (CI/CD)
