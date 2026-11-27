@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "remi-enterprise-suite"
-version = "1.0.3"
+version = "1.0.5"
 description = "Modular enterprise multi-agent AI framework and developer suite."
 readme = "README.md"
 requires-python = ">=3.10"
