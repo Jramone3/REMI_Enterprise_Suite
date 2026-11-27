@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "remi-enterprise-suite"
+version = "1.0.3"
+description = "Modular enterprise multi-agent AI framework and developer suite."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Jesus Ramon Rivas Garcia" }
+]
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "pymongo",
+  "python-dotenv",
+  "requests",
+  "web3",
+  "openai"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "auth_gateways*", "modules*", "reports_analytics*"]
